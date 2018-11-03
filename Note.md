@@ -1,0 +1,37 @@
+# Django使用回忆录
+*使用蓝鲸提供框架久了，便渐渐忘记了原汁原味的Django怎么用了，在公司做共有云管理系统时，做出的效果不能使自己满意，便计划自己再用原来的Django写一个出来，此篇文章记录Django2.1的配置和使用方法。以便以后查看。*
+
+- settings.py的配置
+```angular2html
+1.静态文件
+
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR,'static')]
+
+2.使用mysql
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'sbcloud',
+        'USER': 'root',
+        'PASSWORD': '1997817',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
+    }
+}
+
+```
+*遇到一些问题，在虚拟环境中执行pip install  --upgrade pip 后，pip报错：ImportError: cannot import name main。*
+* 解决办法：重装了虚拟环境（实在无解）
+
+*这时候运行项目报错：No module named 'MySQLdb'*
+* 解决办法第一步：安装setuptools(若已安装则忽略)
+    - 1.获取setuptools源码包，wget --no-check-certificate  https://pypi.python.org/packages/source/s/setuptools/setuptools-19.6.tar.gz
+    - 2.解压进入解压后的包，执行 python3 setup.py build && sudo python3 setup.py install
+* 解决办法第二步：安装pymysql，在py2中用的是MySQLdb，在py3中虽然换用pymysql，但是导入的包名依旧是原来的，所以我们需要改一下，在主项目目录下的init.py文件中添加两行：
+    - import pymysql
+    - pymysql.install_as_MySQLdb()
+    
+*至此Django应该可以正常跑起来啦～*
+
+* 使用Django自带的用户认证系统
