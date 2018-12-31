@@ -6,6 +6,7 @@
 # @Datetime:18-11-18 下午2:10
 # @Software: PyCharm
 # @license : Copyright(C), Nanyang Institute of Technology
+#
 
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
