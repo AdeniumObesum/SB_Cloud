@@ -14,6 +14,7 @@ from SBCloudManager import settings
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from myauth.models import User
+from myauth import models
 from django.contrib.auth import get_user_model
 
 
@@ -44,7 +45,7 @@ from django.contrib.auth import get_user_model
 #             user.save()
 #         return user
 #
-#
+
 # # 修改用户表单
 # class UserChangeForm(forms.ModelForm):
 #     password = ReadOnlyPasswordHashField()

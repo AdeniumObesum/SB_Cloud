@@ -14,7 +14,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 
 class UserManager(BaseUserManager):
 
-    def create_user(self, name, email, phone, password=None):
+    def create_user(self, name, email, phone=None, password=None):
         if not email:
             raise ValueError('Users must have an email address')
 
@@ -27,7 +27,7 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, name, email, phone, password=None):
+    def create_superuser(self, name, email, phone=None, password=None):
         user = self.create_user(name, email, phone, password)
         user.is_admin = True
         user.save(using=self._db)
@@ -36,8 +36,8 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     """重写user类"""
-    name = models.CharField(max_length=100, unique=True)
-    email = models.EmailField(max_length=100, unique=True)
+    name = models.CharField(verbose_name='user name',max_length=255, unique=True)
+    email = models.EmailField(verbose_name='email address',max_length=100, unique=True)
     created_at = models.DateTimeField(verbose_name='注册日期', auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     phone = models.CharField(verbose_name='联系电话', max_length=100, blank=True, null=True)
@@ -47,8 +47,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
-    USERNAME_FIELD = 'name'
-    REQUIRED_FIELDS = ('email',)
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['name']
 
     class Meta:
         ordering = ('-created_at',)
@@ -71,3 +71,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def is_staff(self):
         return self.is_admin
+
+    class Meta:
+        verbose_name = '用户表'
+        verbose_name_plural = '用户表'
