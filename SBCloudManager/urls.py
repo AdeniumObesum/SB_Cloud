@@ -22,6 +22,7 @@ urlpatterns = [
     path('home/', views.home),
     path('', views.home),
     path('login/', views.acc_login),
-    path('logout/', views.logout),
+    path('logout/', views.acc_logout),
+    path('registe/', views.acc_registe),
     path('public_cloud/', include('public_cloud.urls')),
 ]

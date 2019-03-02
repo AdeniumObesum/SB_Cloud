@@ -1,47 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <base id="base" href="${base}">
-    <meta charset="UTF-8">
-    <title>登录</title>
-    <link rel="stylesheet" type="text/css" href="/static/css/normalize.css" />
-    <link rel="stylesheet" type="text/css" href="/static/css/demo.css" />
-    <!--必要样式-->
-    <link rel="stylesheet" type="text/css" href="/static/css/component.css" />
-    <link rel="stylesheet" type="text/css" href="/static/layui/css/layui.css" />
-    <script type="text/javascript" src="/static/js/jquery-1.10.2.min.js"></script>
-    <script type="text/javascript" src="/static/layui/layui.js"></script>
+    <meta charset="utf-8">
+    <title>云管平台登录</title>
+    <meta name="description" content="particles.js is a lightweight JavaScript library for creating particles.">
+    <meta name="author" content="Vincent Garreau"/>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" media="screen" href="/static/css/style.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/reset.css"/>
 </head>
 <body>
-<div class="container demo-1">
-    <div class="content">
-        <div id="large-header" class="large-header">
-            <canvas id="demo-canvas"></canvas>
-            <div class="logo_box">
-                <h3>欢迎你</h3>
-                <form action="/login/" name="f" method="post">
-                    {% csrf_token %}
-                    <div class="input_outer">
-                        <span class="u_user"></span>
-                        <input name="username" class="text" style="color: #FFFFFF !important" type="text" placeholder="请输入账户">
-                    </div>
-                    <div class="input_outer">
-                        <span class="us_uer"></span>
-                        <input name="password" class="text" style="color: #FFFFFF !important; position:absolute; z-index:100;"value="" type="password" placeholder="请输入密码">
-                    </div>
-                    <div class="mb2">
-                        <button type="submit" lay-filter="sub" class="act-but submit" style="width: 100%; border: 0;color: #FFFFFF">登录</button>
-                    </div>
-                </form>
-            </div>
+
+<div id="particles-js">
+    <div class="login">
+        <div class="login-top">
+            登录
         </div>
+        <form action="/login/" method="post">
+            <div class="login-center clearfix">
+                <div class="login-center-img"><img src="/static/img/name.png"/></div>
+                <div class="login-center-input">
+                    {% csrf_token %}
+                    <input type="text" name="email" value="" placeholder="请输入您的邮箱" onfocus="this.placeholder=''"
+                           onblur="this.placeholder='请输入您的用户名'"/>
+                    <div class="login-center-input-text">用户名</div>
+                </div>
+            </div>
+            <div class="login-center clearfix">
+                <div class="login-center-img"><img src="/static/img/password.png"/></div>
+                <div class="login-center-input">
+                    <input type="password" name="password" value="" placeholder="请输入您的密码" onfocus="this.placeholder=''"
+                           onblur="this.placeholder='请输入您的密码'"/>
+                    <div class="login-center-input-text">密码</div>
+                </div>
+            </div>
+            <button class="login-button" type="submit" style="margin-left: 12%">登录</button>
+             <a href="/registe/" style="margin-left: 12%;"><button class="login-button" type="button" style="background-color: #9F9F9F">注册</button></a>
+        </form>
+
     </div>
-</div><!-- /container -->
-<script src="/static/js/TweenLite.min.js"></script>
-<script src="/static/js/EasePack.min.js"></script>
-<script src="/static/js/rAF.js"></script>
-<script src="/static/js/demo-1.js"></script>
+    <div class="sk-rotating-plane">
+
+    </div>
+</div>
+
+<!-- scripts -->
+<script src="/static/js/particles.min.js"></script>
+<script src="/static/js/app.js"></script>
+<script type="text/javascript">
+    function hasClass(elem, cls) {
+        cls = cls || '';
+        if (cls.replace(/\s/g, '').length == 0) return false; //当cls没有参数时，返回false
+        return new RegExp(' ' + cls + ' ').test(' ' + elem.className + ' ');
+    }
+
+    function addClass(ele, cls) {
+        if (!hasClass(ele, cls)) {
+            ele.className = ele.className == '' ? cls : ele.className + ' ' + cls;
+        }
+    }
+
+    function removeClass(ele, cls) {
+        if (hasClass(ele, cls)) {
+            var newClass = ' ' + ele.className.replace(/[\t\r\n]/g, '') + ' ';
+            while (newClass.indexOf(' ' + cls + ' ') >= 0) {
+                newClass = newClass.replace(' ' + cls + ' ', ' ');
+            }
+            ele.className = newClass.replace(/^\s+|\s+$/g, '');
+        }
+    }
+
+    document.querySelector(".login-button").onclick = function () {
+        addClass(document.querySelector(".login"), "active")
+        setTimeout(function () {
+            addClass(document.querySelector(".sk-rotating-plane"), "active")
+            document.querySelector(".login").style.display = "none"
+        }, 800)
+    }
+</script>
+<div style="text-align:center;">
+</div>
+<style>
+</style>
 </body>
-
-
 </html>
