@@ -15,14 +15,23 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework import routers
+from rest_framework.schemas import get_schema_view
+
 from public_cloud import views
+
+router = routers.DefaultRouter()
+# router.register('/users', views.UserViewSet)
+# router.register('/blogs/', views.BlogViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('home/', views.home),
-    path('', views.home),
-    path('login/', views.acc_login),
-    path('logout/', views.acc_logout),
-    path('registe/', views.acc_registe),
+    path('docs/', get_schema_view()),
+    path('login/', views.LoginView.as_view()),
+    # path('logout/', views.LogoutView.as_view()),
+    path('register/', views.RegisterView.as_view()),
+    path('change_pwd/', views.acc_change_pwd),
+    path('families/', views.Family.as_view()),
+    # path('acc_user_menu/', views.acc_user_menu),
     path('public_cloud/', include('public_cloud.urls')),
 ]

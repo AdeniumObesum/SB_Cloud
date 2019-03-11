@@ -1,0 +1,23 @@
+.DS_Store
+/sb_cloud_ui/node_modules
+/ENV_SB/
+/sb_cloud_ui/dist
+
+# local env files
+/sb_cloud_ui/.env.local
+/sb_cloud_ui/.env.*.local
+
+# Log files
+/sb_cloud_ui/npm-debug.log*
+/sb_cloud_ui/yarn-debug.log*
+/sb_cloud_ui/yarn-error.log*
+
+# Editor directories and files
+.idea
+/sb_cloud_ui/.idea
+/sb_cloud_ui/.vscode
+/sb_cloud_ui/*.suo
+/sb_cloud_ui/*.ntvs*
+/sb_cloud_ui/*.njsproj
+/sb_cloud_ui/*.sln
+/sb_cloud_ui/*.sw*

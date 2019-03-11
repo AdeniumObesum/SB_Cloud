@@ -8,9 +8,11 @@
 # @license : Copyright(C), Nanyang Institute of Technology
 
 
-from django.urls import path,include
+from django.urls import path
 
+from public_cloud.account import views
 
 urlpatterns = [
     # path('public_cloud/', include('public_cloud.urls')),
+    path('create_family/', views.CreateFamilyView.as_view()),
 ]
