@@ -102,38 +102,68 @@ class HostInfo(models.Model):
     """
     服务器信息表
     """
-    family_id = models.IntegerField(verbose_name='家族id')
+    account_id = models.IntegerField(verbose_name='帐号id')
     instance_id = models.CharField(verbose_name='实例id', max_length=100)
     instance_name = models.CharField(verbose_name='实例名称', max_length=100)
-    instance_des = models.CharField(verbose_name='实例描述', max_length=200)
+    os_name = models.CharField(verbose_name='系统版本', max_length=100, null=True)
+    # instance_des = models.CharField(verbose_name='实例描述', max_length=200)
     # 0-linux,1-windows,--其他依次添加
+    # instance_network_type_choice = (
+    #     ('classic', '经典网络'),
+    #     ('vpc', 'VPC'),
+    # )
+    # instance_network_type = models.CharField(verbose_name='网络类型', max_length=50, choices=instance_network_type_choice)
     instance_type_choices = (
-        (0, 'linux'),
-        (1, 'windows'),
+        (0, 'Linux'),
+        (1, 'Windows'),
     )
-    instance_type = models.IntegerField(verbose_name='系统类型', choices=instance_type_choices, default=0)
+    instance_type = models.IntegerField(verbose_name='系统类型', choices=instance_type_choices, null=True)
     instance_status_choices = (
-        (0, '正常'),
-        (1, '关闭'),
-        (2, '重启中'),
-        (2, '关机中'),
+        (0, '运行中'),
+        (1, '启动中'),
+        (2, '停止中'),
+        (3, '已停止'),
     )
-    is_delete = models.IntegerField(verbose_name='是否删除', default=0)
-    instance_status = models.IntegerField(verbose_name='实例运行状态', choices=instance_status_choices, default=0)
+
+    instance_status = models.IntegerField(verbose_name='实例运行状态', choices=instance_status_choices, null=True)
     instance_pub_ip = models.CharField(verbose_name='公网ip', max_length=100, null=True)
     instance_pri_ip = models.CharField(verbose_name='内网ip', max_length=100, null=True)
+    instance_vpc_ip = models.CharField(verbose_name='专有ip', max_length=100, null=True)
+    network_interface_id = models.CharField(verbose_name='弹性网卡ip', max_length=100, null=True)
+    internet_charge_type_choice = (
+        (0, '按流量计费'),
+        (1, '按带宽计费'),
+    )
+    internet_charge_type = models.IntegerField(verbose_name='网络计费方式', choices=internet_charge_type_choice, null=True)
+    price_per_hour = models.CharField(verbose_name='每小时最高价', max_length=50, null=True)
+
+    instance_charge_type_choice = (
+        (0, '包年包月'),
+        (1, '按量付费'),
+    )
+    instance_charge_type = models.IntegerField(verbose_name='实例计费方式', choices=instance_charge_type_choice, null=True)
     policy_id = models.IntegerField(verbose_name='策略id', null=True)
     region_id = models.IntegerField(verbose_name='地区id', null=True)
     start_time = models.DateTimeField(verbose_name='创建时间', default=datetime.datetime.now)
     end_time = models.DateTimeField(verbose_name='到期时间', default=datetime.datetime.now)
     last_buy_time = models.DateTimeField(verbose_name='上次续费时间', null=True)
     # 需要关联地区信息
+
+    # lock_reason_choice = (
+    #     ('financial', '因欠费被锁定'),
+    #     ('security', '因安全原因被锁定'),
+    #     ('recycling', '抢占式实例的待释放锁定状态'),
+    #     ('dedicatedhostfinancial', '因为专有宿主机欠费导致 ECS 实例被锁定'),
+    # )
+    # lock_reason = models.CharField(verbose_name='锁定原因', max_length=100, null=True)
+
     is_overdue_choices = (
         (0, '使用中'),
         (1, '已过期'),
         (2, '锁定'),
     )
     is_overdue = models.IntegerField(verbose_name='使用状态', choices=is_overdue_choices, default=0)
+    is_delete = models.IntegerField(verbose_name='是否删除', default=0)
 
     class Meta:
         verbose_name = '主机资源信息'
