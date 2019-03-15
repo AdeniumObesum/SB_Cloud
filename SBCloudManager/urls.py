@@ -28,7 +28,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('docs/', get_schema_view()),
     path('login/', views.LoginView.as_view()),
-    # path('logout/', views.LogoutView.as_view()),
+    path('logout/', views.LogoutView.as_view()),
     path('register/', views.RegisterView.as_view()),
     path('change_pwd/', views.acc_change_pwd),
     path('families/', views.Family.as_view()),

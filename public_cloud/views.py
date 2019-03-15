@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from myauth import auth
 from myauth import models as user_models
 from myauth.models import User
+from public_cloud import ResponseData
 from public_cloud import models
 from public_cloud import serializers
 
@@ -52,11 +53,7 @@ class LoginView(APIView):
         return super(LoginView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        response = {
-            'code': 0,
-            'msg': 'success',
-            'data': {}
-        }
+        response = ResponseData.ResponseData().response_data()
         return Response(response, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
@@ -67,11 +64,8 @@ class LoginView(APIView):
         :param kwargs:
         :return:
         """
-        response = {
-            'code': 0,
-            'msg': 'success',
-            'data': []
-        }
+
+        response = ResponseData.ResponseData().response_data()
 
         email = request.data.get("email")  ## 邮箱登录
         password = request.data.get("password")
@@ -99,19 +93,21 @@ class LoginView(APIView):
         return Response(response, status=status.HTTP_200_OK)
 
 
-# class LogoutView(APIView):
-#     def dispatch(self, request, *args, **kwargs):
-#         return super(LogoutView, self).dispatch(request, *args, **kwargs)
-#
-#     def get(self, request, *args, **kwargs):
-#         response = {
-#             'code': 0,
-#             'msg': 'success',
-#             'data': {}
-#         }
-#         logout(request)
-#         request.session.clear()
-#         return Response(response, status=status.HTTP_200_OK)
+class LogoutView(APIView):
+    def dispatch(self, request, *args, **kwargs):
+        return super(LogoutView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        response = ResponseData.ResponseData().response_data()
+        user_token = request.data.get('user_token')
+        has_user = user_models.UserToken.objects.filter(token=user_token)
+        if has_user:
+            has_user.delete()
+            response['msg'] = '已注销'
+        else:
+            response['code'] = 1
+            response['msg'] = '用户不存在'
+        return Response(response, status=status.HTTP_200_OK)
 
 
 class RegisterView(APIView):
@@ -119,11 +115,7 @@ class RegisterView(APIView):
         return super(RegisterView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = {
-            'code': 0,
-            'msg': 'success',
-            'data': {}
-        }
+        response = ResponseData.ResponseData().response_data()
         username = request.data.get('username', '')
         password = request.data.get('password', '')
         phone = request.data.get('phone', '')
@@ -156,11 +148,7 @@ class Family(APIView):
         return super(Family, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        response = {
-            'code': 0,
-            'msg': 'success',
-            'data': {}
-        }
+        response = ResponseData.ResponseData().response_data()
         user_id = request.data.get('user_id', '')
         if user_id:
             families = models.Family.objects.filter(user_id=user_id)

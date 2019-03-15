@@ -31,14 +31,19 @@ from rest_framework.authentication import BaseAuthentication
 from myauth import models
 
 
+# import json
+
 class MyAuthentication(BaseAuthentication):
     def authenticate(self, request):
-        token = request.data.get('token')
-        token_obj = models.UserToken.objects.filter(token=token).first()
-        if not token_obj:
-            raise exceptions.AuthenticationFailed('用户认证失败')
-        # 在rest framework内部会将整个两个字段赋值给request，以供后续操作使用
-        return (token_obj.user, token_obj)
+        token = request.data.get('user_token')
+        if not token:
+            raise exceptions.AuthenticationFailed('未认证')
+        else:
+            token_obj = models.UserToken.objects.filter(token=token)
+            if not token_obj:
+                raise exceptions.AuthenticationFailed('认证失败')
+                # 在rest framework内部会将整个两个字段赋值给request，以供后续操作使用
+        return token_obj.user, token_obj
 
     def authenticate_header(self, request):
         pass

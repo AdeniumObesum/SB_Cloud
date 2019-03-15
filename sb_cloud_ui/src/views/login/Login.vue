@@ -44,6 +44,7 @@
     name: "Login",
     data() {
       return {
+        base_url: this.$base_url,
         userEmail: '',
         password: '',
         Remember: true,
@@ -55,7 +56,7 @@
         let app = this;
         app.loginLoading = true;
         $.ajax({
-          url: window.host + '/login/',
+          url: app.base_url + '/login/',
           // url: 'http://127.0.0.1:8000/login/',
           type: 'POST',
           dataType: 'json',
@@ -67,19 +68,21 @@
           data: {email: app.userEmail, password: app.password},
           success: function (data) {
             if (data.code == '0') {
-              app.$cookieStore.setCookie('user_token', data.data.user.user_token);
-              app.$cookieStore.setCookie('user_email', data.data.user.user_email);
-              app.$cookieStore.setCookie('is_super', data.data.user.user_token);
-              app.$cookieStore.setCookie('username', data.data.user.username);
-              app.$cookieStore.setCookie('user_id', data.data.user.user_id);
+              app.$cookieStore.setCookie('user_token', data.data.obj.user_token);
+              app.$cookieStore.setCookie('user_email', data.data.obj.user_email);
+              app.$cookieStore.setCookie('is_super', data.data.obj.user_token);
+              app.$cookieStore.setCookie('username', data.data.obj.username);
+              app.$cookieStore.setCookie('user_id', data.data.obj.user_id);
               // app.$route.meta.keepAlive = true;
               // var tt = app.$cookieStore.getCookie('user_token');
+              app.$router.push({
+                name: 'Home'
+              })
             }else {
               // app.$route.meta.keepAlive = false;
             }
           },
           error: function (XMLHttpRequest, textStatus, errorThrown) {
-            app.$route.meta.keepAlive = false;
             console.log(XMLHttpRequest.readyState);
             console.log(textStatus);
             console.log(errorThrown);

@@ -37,6 +37,9 @@ from public_cloud.cloud_api.aliyun import aliyun_util
 # 先初始化云厂商
 # 再录入家族
 # 再录入账户
+# 同步地区
+# 同步主机
+# 同步磁盘
 
 class AliyunOperator(object):
     """
@@ -46,7 +49,7 @@ class AliyunOperator(object):
     def __init__(self, **kwargs):
         self.access_key = kwargs['access_key']
         self.secret_key = kwargs['secret_key']
-        self.firm = models.FirmInfo.objects.filter(us_name='aliyun')[0]
+        self.firm = models.FirmInfo.objects.filter(firm_key=100)[0]
         self.account = models.AccountInfo.objects.filter(firm_id=self.firm.id, access_key=self.access_key)[0]
         pass
 
@@ -55,7 +58,7 @@ class AliyunOperator(object):
         format_time = get_time[0][0] + ' ' + get_time[1][1]
         return datetime.datetime.strptime(format_time, '%Y-%m-%d %H:%M')
 
-    def request_2_aliyun(self, base_url, **kwargs):
+    def request_2_aliyun(self, base_url, response_pages=[], **kwargs):  # 返回所有请求页
         config = {
             'Format': 'JSON',
             'Version': '2014-05-26',
@@ -64,12 +67,18 @@ class AliyunOperator(object):
             'Timestamp': self.get_utc(),
             'SignatureVersion': '1.0',
             'SignatureNonce': str(uuid.uuid4()),
+            'PageSize': 100
         }
         params = kwargs
         all_params = ChainMap(config, params)
         all_params = aliyun_util.get_signature(all_params=all_params, secret_key=self.secret_key)
         resp = requests.get(url=base_url, params=all_params)
-        return json.loads(resp.content)
+        resp = json.loads(resp.content)
+        response_pages.append(resp)
+        if resp['PageSize'] > resp['PageNum']:
+            config['PageNum'] = resp['PageNum'] + 1
+            self.request_2_aliyun(base_url=base_url, **config, response_pages=response_pages)
+        return response_pages
 
     def get_utc(self):
         UTCC = datetime.datetime.utcnow()
@@ -84,23 +93,38 @@ class AliyunOperator(object):
         base_url = 'https://' + endpoint
         action = 'DescribeRegions'
         params = {
-            'Action': action
+            'Action': action,
         }
-        regions = self.request_2_aliyun(base_url=base_url, **params)
-        return regions['Regions']['Region']
+        response_list = []
+        regions_pages = self.request_2_aliyun(base_url=base_url, **params)
+        for one_page in regions_pages:
+            response_list += one_page['Regions']['Region']
+        return response_list
         # RegionId: cn-qingdao
         # RegionEndpoint: ecs.aliyuncs.com
         # LocalName: 华北1
 
     def api_get_region_info_to_model(self):
-
+        '''
+        先执行这个初始化地区信息
+        :return:
+        '''
         regions = self.api_get_region_info()
+        db_all_info = models.RegionInfo.objects.filter(firm_id=self.firm.id, type=0, is_delete=0)
+        api_region_list = [i['RegionId'] for i in regions]
+
+        for info in db_all_info:
+            if info.region_id not in api_region_list:
+                info.is_delete = 1
+                info.save()
+
         for region in regions:
             models.RegionInfo.objects.update_or_create(
                 region_id=region['RegionId'],
+                firm_id=self.firm.id,
                 defaults={
-                    'firm_id': self.firm.id,
-                    'region_id': region['RegionId'],
+                    # 'firm_id': self.firm.id,
+                    # 'region_id': region['RegionId'],
                     'region_type': 0,
                     'region_name': region['LocalName'],
                     'end_point': region['RegionEndpoint']
@@ -120,8 +144,9 @@ class AliyunOperator(object):
         response_list = []
         for region in regions:
             params['RegionId'] = region.region_id
-            response = self.request_2_aliyun(base_url=base_url, **params)
-            response_list += response['Instances']['Instance']
+            ecs_pages = self.request_2_aliyun(base_url=base_url, **params)
+            for one_page in ecs_pages:
+                response_list += one_page['Instances']['Instance']
         return response_list
 
     def api_get_ecs_to_model(self):
@@ -130,6 +155,14 @@ class AliyunOperator(object):
         :return:
         """
         ecs_list = self.api_get_ecs()
+        db_all_info = models.HostInfo.objects.filter(firm_id=self.firm.id, account_id=self.account.id, is_delete=0)
+        api_ecs_list = [i['InstanceId'] for i in ecs_list]
+
+        for info in db_all_info:
+            if info.instance_id not in api_ecs_list:
+                info.is_delete = 1
+                info.save()
+
         for ecs in ecs_list:
             if ecs['OSType'] == 'linux':
                 instance_type = 0
@@ -159,10 +192,13 @@ class AliyunOperator(object):
                 is_overdue = 2
             else:
                 is_overdue = 0
+            region = models.RegionInfo.objects.get(region_id=ecs['RegionId'], is_delete=0, firm_id=self.firm.id)
             models.HostInfo.objects.update_or_create(
                 account_id=self.account.id,
                 instance_id=ecs['InstanceId'],
                 defaults={
+                    # 'account_id': self.account.id,
+                    # 'instance_id': ecs['InstanceId'],
                     'instance_name': ecs['HostName'],
                     'os_name': ecs['OSName'],
                     'instance_type': instance_type,
@@ -174,12 +210,96 @@ class AliyunOperator(object):
                     'internet_charge_type': internet_charge_type,
                     'instance_charge_type': instance_charge_type,
                     'price_per_hour': ecs['SpotPriceLimit'],
-                    'region_id': ecs['RegionId'],
+                    'region_id': region.id,
                     'is_overdue': is_overdue,
                     'start_time': self.get_date_time(ecs['CreationTime']),
                     'end_time': self.get_date_time(ecs['ExpiredTime'])
                 }
             )
+
+    def api_get_disks(self):
+        regions = models.RegionInfo.objects.filter(firm_id=self.firm.id)
+        base_url = 'https://ecs.aliyuncs.com'
+        params = {
+            'Action': 'DescribeDisks'
+        }
+        response_list = []
+        for region in regions:
+            params['RegionId'] = region.region_id
+            disks_pages = self.request_2_aliyun(base_url=base_url, **params)
+            for one_page in disks_pages:
+                response_list += one_page['Disks']['Disk']
+        return response_list
+        pass
+
+    def api_get_disks_to_model(self):
+        disks = self.api_get_disks()
+        db_all_info = models.DiskInfo.objects.filter(firm_id=self.firm.id, account_id=self.account.id, is_delete=0)
+        api_disk_list = [i['DiskId'] for i in disks]
+
+        for info in db_all_info:
+            if info.disk_id not in api_disk_list:
+                info.is_delete = 1
+                info.save()
+
+        for disk in disks:
+
+            if disk['Type'] == 'data':
+                disk_type = 1
+            elif disk['Type'] == 'system':
+                disk_type = 0
+
+            if disk['Category'] == 'cloud':
+                disk_category = 0
+            elif disk['Category'] == 'cloud_efficiency':
+                disk_category = 1
+            elif disk['Category'] == 'cloud_ssd':
+                disk_category = 2
+            elif disk['Category'] == 'ephemeral_ssd':
+                disk_category = 3
+            elif disk['Category'] == 'cloud_essd':
+                disk_category = 4
+
+            if disk['Status'] == 'In_use':
+                disk_status = 0
+            elif disk['Status'] == 'Available':
+                disk_status = 1
+            elif disk['Status'] == 'Attaching':
+                disk_status = 2
+            elif disk['Status'] == 'Detaching':
+                disk_status = 3
+            elif disk['Status'] == 'Creating':
+                disk_status = 4
+            elif disk['Status'] == 'Relniting':
+                disk_status = 5
+
+            if disk['DiskChargeType'] == 'PrePaid':
+                disk_charge_type = 0
+            elif disk['DiskChargeType'] == 'PostPaid':
+                disk_charge_type = 1
+
+            region = models.RegionInfo.objects.get(region_id=disk['RegionId'], is_delete=0, firm_id=self.firm.id)
+            instance = models.HostInfo.objects.get(is_delete=0, instance_id=disk['InstanceId'],
+                                                   account_id=self.account.id)
+
+            models.DiskInfo.objects.update_or_create(
+                account_id=self.account.id,
+                disk_id=disk['DiskId'],
+                defaults={
+                    # account_id: self.account.id,
+                    'region_id': region.id,
+                    'disk_type': disk_type,
+                    'instance_id': instance.id,
+                    'disk_name': disk['DiskName'],
+                    'disk_category': disk_category,
+                    'encrypted': disk['Encrypted'],
+                    'disk_size': disk['Size'],
+                    'disk_status': disk_status,
+                    'disk_charge_type':  disk_charge_type
+                }
+            )
+
+            ### 存
 
 # if __name__ == '__main__':
 #     x = 'LTAIDICTHyLR9jsq'

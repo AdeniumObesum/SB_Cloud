@@ -160,6 +160,7 @@
   import EuiFooter from './components/Footer.vue';
   import NavBar from './components/NavBar.vue'
   import Menu from '@/menu/index';
+  import $ from 'jquery'
 
   export default {
     data() {
@@ -231,8 +232,25 @@
         this.NavBarWidth();
       },
       logout() {
-        sessionStorage.removeItem(this.$Config.tokenKey);
-        this.$router.push({path: '/login'});
+        // sessionStorage.removeItem(this.$Config.tokenKey);/
+        var user_id = this.$cookieStore.getCookie('user_id'),
+          user_token = this.$cookieStore.getCookie('user_token');
+        $.ajax({
+          url: this.$base_url + '/logout/',
+          type: 'post',
+          dataType: 'json',
+          data: {user_token: user_token},
+          success: function (data) {
+            if (data.code == 0){
+              this.$cookieStore.delCookie('user_token');
+              this.$cookieStore.delCookie('user_email');
+              this.$cookieStore.delCookie('is_super');
+              this.$cookieStore.delCookie('username');
+              this.$cookieStore.delCookie('user_id');
+              this.$router.push({name: 'Login'});
+            }
+          }
+        });
       },
       handleOpen(key, keyPath) {
         //console.log(key, keyPath);
@@ -263,7 +281,7 @@
       }
     },
     mounted: function () {
-      console.log('开始时调用');
+      // console.log('开始时调用');
       this.switchTabBar = localStorage.getItem('switchTabBar') ? true : false;
       this.fixedTabBar = localStorage.getItem('fixedTabBar') ? true : false;
       if (this.switchTabBar) document.getElementById('mainContainer').style.minHeight = 'calc(100vh - 139px)';

@@ -5,7 +5,13 @@
 
 <script>
   export default {
-    name: "Home"
+    name: "Home",
+    mounted: function () {
+
+    },
+    methods: {
+
+    }
   }
 </script>
 

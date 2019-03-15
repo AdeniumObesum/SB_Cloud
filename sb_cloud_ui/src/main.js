@@ -20,6 +20,7 @@ Vue.prototype.$Api = Api
 Vue.prototype.$Config = Config
 Vue.prototype.$Func = Function
 Vue.config.productionTip = false;
+Vue.prototype.$base_url = 'http://127.0.0.1:8000'
 Vue.prototype.$cookieStore = {
   setCookie,
   getCookie,
@@ -27,13 +28,13 @@ Vue.prototype.$cookieStore = {
 };
 router.beforeEach((to, from, next) => {
   if (to.matched.some(record => record.meta.requireAuth)) { // 判断该路由是否需要登录权限
-    console.log('需要登录');
+    console.log('需要登录',getCookie('user_token'));
     if (getCookie('user_token')) { // 判断当前的token是否存在 ； 登录存入的token
       next();
     }
     else {
       next({
-        path: '/',
+        name: 'Login',
         query: {redirect: to.fullPath} // 将跳转的路由path作为参数，登录成功后跳转到该路由
       })
     }
@@ -57,9 +58,19 @@ $.ajaxSetup({
   contentType: "application/x-www-form-urlencoded;charset=utf-8",
   complete: function (XMLHttpRequest, textStatus) {
     //通过XMLHttpRequest取得响应头，sessionstatus，
-    var xhr = XMLHttpRequest;
-    console.log(xhr)
-    console.log(textStatus)
+    var res = XMLHttpRequest.responseText;
+  },
+  statusCode:{
+    403: function () {
+      Vue.$cookieStore.delCookie('user_token');
+      Vue.$cookieStore.delCookie('user_email');
+      Vue.$cookieStore.delCookie('is_super');
+      Vue.$cookieStore.delCookie('username');
+      Vue.$cookieStore.delCookie('user_id');
+      Vue.$router.push({
+        name: 'Login'
+      })
+    }
   }
 });
 /* eslint-disable no-new */
