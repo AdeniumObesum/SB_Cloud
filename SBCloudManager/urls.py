@@ -32,6 +32,7 @@ urlpatterns = [
     path('register/', views.RegisterView.as_view()),
     path('change_pwd/', views.acc_change_pwd),
     path('families/', views.Family.as_view()),
+    path('add_family/', views.CreateFamily.as_view()),
     # path('acc_user_menu/', views.acc_user_menu),
     path('public_cloud/', include('public_cloud.urls')),
 ]

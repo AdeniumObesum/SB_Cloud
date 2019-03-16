@@ -5,6 +5,6 @@ const proUrl = 'http://apiUrl.com';
 export default {
   apiUrl : process.env.NODE_ENV=='development' ? devUrl : proUrl,
   apiPrefix : "api",
-  gitHub : 'https://github.com/xusenlin/ElementUIAdmin2'
+  gitHub : 'https://github.com/AdeniumObesum/SB_Cloud'
 }
 

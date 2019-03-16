@@ -1,6 +1,6 @@
 <template>
   <div class="main" id="app">
-    <div class="header" v-if="$route.meta.keepAlive">
+    <div class="header" v-if="$route.meta.showHome">
       <div class="logo">
         <span class="big">
           <img width="40" style="position: absolute;left: 10px;top: 10px;margin-right: 10px" src="./assets/imgs/云.svg"
@@ -22,29 +22,6 @@
           </span>
           <el-dropdown-menu slot="dropdown">
             <div style="padding: 10px;text-align: center;width: 420px">
-              <div class="setting-category">
-                <el-switch
-                  @change="saveSwitchTabBarVal"
-                  v-model="switchTabBar"
-                  active-text="开启TabBar"
-                  inactive-text="关闭TabBar">
-                </el-switch>
-                <el-switch
-                  @change="saveFixedTabBar"
-                  v-if="switchTabBar"
-                  v-model="fixedTabBar"
-                  style="margin-top: 10px"
-                  active-text="固定在顶部"
-                  inactive-text="随页面滚动">
-                </el-switch>
-                <el-alert
-                  v-if="switchTabBar"
-                  style="margin-top: 10px"
-                  title="导航标签超过容器时,可在导航上滚动鼠标来移动标签"
-                  type="info"
-                  show-icon>
-                </el-alert>
-              </div>
               <div class="setting-category" style="display: flex;height: 80px;align-items: center">
                 <div style="width: 80px">
                   <el-button type="primary" icon="el-icon-sort" circle @click="ToggleGrayMode"
@@ -75,19 +52,26 @@
         <!--家族选项-->
         <el-dropdown>
           <span class="header-btn">
-              {{currentFamily}}<i class="el-icon-arrow-down el-icon--right"></i>
+              {{currentFamily.name}}<i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item><i style="padding-right: 8px" class="fa fa-cog"></i>one
-            </el-dropdown-item>
-            <el-dropdown-item><i style="padding-right: 8px" class="fa fa-key"></i>two
-            </el-dropdown-item>
+            <template v-for="item in families">
+              <div style="" @click="toFamily(item.id, item.family_name)">
+                <el-dropdown-item><i style="padding-right: 8px" class="fa fa-key"></i>
+                  <span>{{item.family_name}}</span>
+                </el-dropdown-item>
+              </div>
+            </template>
+            <div style="" @click="toAddFamily">
+              <el-dropdown-item><span>创建❤家族</span></el-dropdown-item>
+            </div>
+
           </el-dropdown-menu>
         </el-dropdown>
         <!--end家族-->
         <el-dropdown>
           <span class="header-btn">
-              Admin<i class="el-icon-arrow-down el-icon--right"></i>
+            {{curUser.username}}<i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item @click.native="$router.push('/personal')"><i style="padding-right: 8px"
@@ -99,7 +83,7 @@
         </el-dropdown>
       </div>
     </div>
-    <div class="app" v-if="$route.meta.keepAlive">
+    <div class="app" v-if="$route.meta.showHome">
       <div class="aside">
         <div class="menu">
           <el-menu
@@ -135,10 +119,8 @@
         </div>
       </div>
       <div class="app-body">
-        <NavBar id="nav-bar" v-if="switchTabBar"
-                :style="fixedTabBar && switchTabBar?'position: fixed;top: 0;':''"></NavBar>
-        <div v-else style="margin-top: 50px;"></div>
-        <div id="mainContainer" :style="fixedTabBar && switchTabBar?'margin-top: 88px;':''" class="main-container">
+        <div style="margin-top: 50px;"></div>
+        <div id="mainContainer" class="main-container">
           <!--<transition name="fade">-->
           <router-view></router-view>
           <!--</transition>-->
@@ -148,10 +130,14 @@
     </div>
 
     <!--登录-->
-    <div v-if="!$route.meta.keepAlive">
+    <div v-if="$route.meta.showOther && !$route.meta.requireAuth">
       <router-view></router-view>
     </div>
 
+    <!--选择家族 或者 创建家族-->
+    <div v-if="$route.meta.showOther">
+      <router-view></router-view>
+    </div>
   </div>
 </template>
 
@@ -165,12 +151,12 @@
   export default {
     data() {
       return {
-        fixedTabBar: false,
-        switchTabBar: false,
         siteName: '云平台管理系统',
         isCollapse: false,
         menu: Menu,
-        currentFamily: 'Family',
+        curUser: this.$Func.getSessionData('user'),
+        currentFamily: this.$Func.getSessionData('cur_family'),
+        families: this.$Func.getSessionData('families')
       };
     },
     methods: {
@@ -203,16 +189,6 @@
         }
         Screenfull.toggle();
       },
-      saveFixedTabBar(v) {
-        v ? localStorage.setItem('fixedTabBar', v) : localStorage.removeItem('fixedTabBar');
-        this.NavBarWidth();
-      },
-      saveSwitchTabBarVal(v) {
-        let containerDom = document.getElementById('mainContainer');
-        v ? containerDom.style.minHeight = 'calc(100vh - 139px)' : containerDom.style.minHeight = 'calc(100vh - 101px)';
-        v ? localStorage.setItem('switchTabBar', v) : localStorage.removeItem('switchTabBar');
-        this.NavBarWidth();
-      },
       sidebarToggle(e) {
         e.preventDefault();
         if (this.isCollapse) {
@@ -233,21 +209,18 @@
       },
       logout() {
         // sessionStorage.removeItem(this.$Config.tokenKey);/
-        var user_id = this.$cookieStore.getCookie('user_id'),
-          user_token = this.$cookieStore.getCookie('user_token');
+        var user_token = this.$Func.getSessionData('user').user_token;
+        console.log(user_token);
+        let app = this;
         $.ajax({
           url: this.$base_url + '/logout/',
           type: 'post',
           dataType: 'json',
           data: {user_token: user_token},
           success: function (data) {
-            if (data.code == 0){
-              this.$cookieStore.delCookie('user_token');
-              this.$cookieStore.delCookie('user_email');
-              this.$cookieStore.delCookie('is_super');
-              this.$cookieStore.delCookie('username');
-              this.$cookieStore.delCookie('user_id');
-              this.$router.push({name: 'Login'});
+            if (data.code == 0) {
+              app.$Func.delSessionData('user');
+              app.$router.push({name: 'Login'});
             }
           }
         });
@@ -258,35 +231,30 @@
       handleClose(key, keyPath) {
         //关闭菜单
       },
-      getFamilies() {
+      toFamily: function (cur_family_id,cur_family_name) {
         let app = this;
-        app.$cookieStore.getCookie('use_id');
+        let cur_family = {
+          id: cur_family_id,
+          name: cur_family_name
+        };
+        console.log('to family')
+        app.$Func.setSessionData('cur_family', cur_family);
+        window.location.reload();
       },
-    },
-    // activated () {
-    //   console.log('组件激活时调用');
-    // },
-    updated() {
-
-    },
-    watch: {
-      '$route': function () {
-        // 调用Family接口
-        if(1){          //如果cookie中有currentFamily
-          // 给当前赋值
-        }else {
-          //请求接口
-        }
-        // console.log('更新时调用');
+      toAddFamily: function () {
+        let app = this;
+        app.$router.push({
+          name: 'AddFamily'
+        })
       }
     },
+    updated() {
+      let app = this;
+    },
+    watch: {
+
+    },
     mounted: function () {
-      // console.log('开始时调用');
-      this.switchTabBar = localStorage.getItem('switchTabBar') ? true : false;
-      this.fixedTabBar = localStorage.getItem('fixedTabBar') ? true : false;
-      if (this.switchTabBar) document.getElementById('mainContainer').style.minHeight = 'calc(100vh - 139px)';
-
-
       if (!this.isCollapse) {
 
         document.body.classList.remove('sidebar-hidden')

@@ -68,11 +68,13 @@
           data: {email: app.userEmail, password: app.password},
           success: function (data) {
             if (data.code == '0') {
-              app.$cookieStore.setCookie('user_token', data.data.obj.user_token);
-              app.$cookieStore.setCookie('user_email', data.data.obj.user_email);
-              app.$cookieStore.setCookie('is_super', data.data.obj.user_token);
-              app.$cookieStore.setCookie('username', data.data.obj.username);
-              app.$cookieStore.setCookie('user_id', data.data.obj.user_id);
+              app.$Func.setSessionData('user', data.data.obj);
+              console.log(data.data.obj);
+              // app.$cookieStore.setCookie('user_token', data.data.obj.user_token);
+              // app.$cookieStore.setCookie('user_email', data.data.obj.user_email);
+              // app.$cookieStore.setCookie('is_super', data.data.obj.user_token);
+              // app.$cookieStore.setCookie('username', data.data.obj.username);
+              // app.$cookieStore.setCookie('user_id', data.data.obj.user_id);
               // app.$route.meta.keepAlive = true;
               // var tt = app.$cookieStore.getCookie('user_token');
               app.$router.push({

@@ -11,8 +11,9 @@ export default new Router({
       name: 'Home',
       component: resolve => require(['@/views/home/Home.vue'], resolve),
       meta: {
-        keepAlive: true,
-        requireAuth: true
+        showHome: true,
+        requireAuth: true,
+        showOther: false
       },
     },
     {
@@ -20,8 +21,9 @@ export default new Router({
       name: 'Login',
       component: Login,
       meta: {
-        keepAlive: false,
-        requireAuth: false
+        showHome: false,
+        requireAuth: false,
+        showOther: true
       },
     },
     {
@@ -29,9 +31,10 @@ export default new Router({
       name: 'test',
       component: resolve => require(['@/views/test/test.vue'], resolve),
       meta: {
-        title: '测试',
-        keepAlive: true,
-        requireAuth: true
+        // title: '测试',
+        showHome: true,
+        requireAuth: true,
+        showOther: false
       },
     },
     {
@@ -39,10 +42,31 @@ export default new Router({
       name: 'Register',
       component: resolve => require(['@/views/login/Register.vue'], resolve),
       meta: {
-        title: '注册',
-        keepAlive: false,
-        requireAuth: false
+        // title: '注册',
+        showHome: false,
+        requireAuth: false,
+        showOther: true
       },
-    }
+    },
+    {
+      path: '/choose_family',
+      name: 'ChooseFamily',
+      component: resolve => require(['@/views/family/ChooseFamily.vue'], resolve),
+      meta: {
+        showHome: false,
+        requireAuth: true,
+        showOther: true
+      },
+    },
+    {
+      path: '/add_family',
+      name: 'AddFamily',
+      component: resolve => require(['@/views/family/AddFamily.vue'], resolve),
+      meta: {
+        showHome: false,
+        requireAuth: true,
+        showOther: true
+      },
+    },
   ]
 })
