@@ -62,8 +62,8 @@
                 </el-dropdown-item>
               </div>
             </template>
-            <div style="padding-left: 15px" @click="toAddFamily">
-              <el-dropdown-item><span>创建❤家族</span></el-dropdown-item>
+            <div @click="toAddFamily">
+              <el-dropdown-item><span style="padding-left: 15px">创建❤家族</span></el-dropdown-item>
             </div>
 
           </el-dropdown-menu>
