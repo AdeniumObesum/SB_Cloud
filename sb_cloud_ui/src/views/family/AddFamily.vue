@@ -87,7 +87,7 @@
         this.$refs[formName].validate((valid) => {
           if (valid) {
             $.ajax({
-              url: this.$base_url + '/add_family/',
+              url: this.$base_url + '/public_cloud/create_family/',
               type: 'post',
               dataType: 'json',
               data: {user_token: user.user_token, user_id: user.user_id, family_name: app.family_data.family_name},

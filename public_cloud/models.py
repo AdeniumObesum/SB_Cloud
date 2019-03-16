@@ -24,29 +24,15 @@ class FirmInfo(models.Model):
         verbose_name = '云厂商信息表'
         db_table = 'firm'
 
-
-# class Menu(models.Model):
-#     """
-#     左侧菜单
-#     """
-#     name = models.CharField(verbose_name='菜单名', max_length=100)
-#     url = models.CharField(verbose_name='菜单路径', max_length=200)
-#     parent_id = models.IntegerField(verbose_name='父亲菜单', default=0)
-#     is_delete = models.IntegerField(default=0)
-#
-#     class Meta:
-#         verbose_name = '菜单表'
-#         db_table = 'Menu'
-
-
 class Family(models.Model):
     """
     家族
     """
     user_id = models.CharField(verbose_name='外键id', max_length=100)
-    user_email = models.CharField(verbose_name='用户邮箱', max_length=100)
+    # family_id = models.CharField(verbose_name='全局唯一标识', max_length=500)
     family_name = models.CharField(verbose_name='家族名', max_length=100)
-
+    create_time = models.DateTimeField(verbose_name='创建时间', default=datetime.datetime.now)
+    is_delete = models.IntegerField(verbose_name='是否删除', default=0)
     # family_type_choices = (
     #     (0, 'common'),
     #     (1, 'noble'),

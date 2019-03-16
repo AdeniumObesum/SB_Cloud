@@ -68,7 +68,7 @@
         let user = this.$Func.getSessionData('user');
         let app = this;
         $.ajax({
-          url: this.$base_url + '/families/',
+          url: this.$base_url + '/public_cloud/get_families/',
           type: 'post',
           dataType: 'json',
           data: {user_token: user.user_token, user_id: user.user_id},

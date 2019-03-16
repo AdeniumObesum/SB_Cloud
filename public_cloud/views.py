@@ -7,8 +7,6 @@ from myauth import auth
 from myauth import models as user_models
 from myauth.models import User
 from public_cloud import ResponseData
-from public_cloud import models
-from public_cloud import serializers
 
 
 def acc_change_pwd(req):
@@ -18,30 +16,6 @@ def acc_change_pwd(req):
     :return:
     """
     pass
-
-
-def acc_user_menu(req):
-    """
-    菜单
-    :param req:
-    :return:
-    """
-
-    pass
-
-
-# class BlogViewSet(viewsets.ModelViewSet):
-#     queryset = Blog.objects.all()
-#     serializer_class = BlogSerializer
-#     permission_classes = (IsOwnerOrReadOnly,)
-#
-#     def perform_create(self, serializer):
-#         serializer.save(owner=User.objects.get(id=self.request.session.get('user_id')))
-#
-#
-# class UserViewSet(viewsets.ModelViewSet):
-#     queryset = User.objects.all()
-#     serializer_class = UserSerializer
 
 
 class LoginView(APIView):
@@ -71,7 +45,6 @@ class LoginView(APIView):
         password = request.data.get("password")
 
         user = authenticate(username=email, password=password)  # 调用 django 的认证模块进行认证
-
         if user:  # 判断验证是否通过
             # login(request, user)
             token = auth.get_token(user)
@@ -94,6 +67,8 @@ class LoginView(APIView):
 
 
 class LogoutView(APIView):
+    authentication_classes = [auth.MyAuthentication]
+
     def dispatch(self, request, *args, **kwargs):
         return super(LogoutView, self).dispatch(request, *args, **kwargs)
 
@@ -134,28 +109,5 @@ class RegisterView(APIView):
             except:
                 register = User.objects.create_user(name=username, email=email, phone=phone, password=password)
                 response['msg'] = '创建成功'
-
-        return Response(response, status=status.HTTP_200_OK)
-
-
-class Family(APIView):
-    """
-    家族类
-    """
-    authentication_classes = [auth.MyAuthentication]
-
-    def dispatch(self, request, *args, **kwargs):
-        return super(Family, self).dispatch(request, *args, **kwargs)
-
-    def get(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData().response_data()
-        user_id = request.data.get('user_id', '')
-        if user_id:
-            families = models.Family.objects.filter(user_id=user_id)
-            serializer = serializers.FamilySerializer(families, many=True)
-            response['data']['obj'] = serializer.data
-        else:
-            response['code'] = 1
-            response['msg'] = '用户为空'
 
         return Response(response, status=status.HTTP_200_OK)

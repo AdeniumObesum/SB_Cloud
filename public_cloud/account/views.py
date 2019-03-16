@@ -3,43 +3,55 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from myauth import auth
+from public_cloud import ResponseData
 from public_cloud import models
 from public_cloud import serializers
 
 
-class CreateFamilyView(APIView):
+class CreateFamily(APIView):
     """
-    创建家族
+    家族类
     """
     authentication_classes = [auth.MyAuthentication]
-    def dispatch(self, request, *args, **kwargs):
-        return super(CreateFamilyView, self).dispatch(request, *args, **kwargs)
 
-    def post(self, request):
-        response = {
-            'code': 0,
-            'msg': 'success',
-            'data': {}
-        }
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreateFamily, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        response = ResponseData.ResponseData().response_data()
         user_id = request.data.get('user_id', '')
-        user_email = request.data.get('user_email', '')
         family_name = request.data.get('family_name', '')
-        if (user_id and user_email and family_name):
-            has = models.Family.objects.filter(family_name=family_name)
-            if (has):
-                response['code'] = 1
-                response['msg'] = '该家族已存在'
-            else:
-                family = models.Family.objects.create(
-                    user_id=user_id,
-                    user_email=user_email,
-                    family_name=family_name
-                )
-                serializer = serializers.FamilySerializer(family)
-                response['data']['obj'] = serializer.data
+        if user_id and family_name:
+            family = models.Family.objects.create(user_id=user_id, family_name=family_name)
+            serializer = serializers.FamilySerializer(family)
+            response['data']['obj'] = serializer.data
         else:
             response['code'] = 1
-            response['msg'] = '输入值错误'
+            response['msg'] = '参数错误'
+
+        return Response(response, status=status.HTTP_200_OK)
+
+
+class GetFamily(APIView):
+    """
+    家族类
+    """
+    authentication_classes = [auth.MyAuthentication]
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(GetFamily, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        response = ResponseData.ResponseData().response_data()
+        user_id = request.data.get('user_id', '')
+        if user_id:
+            families = models.Family.objects.filter(user_id=user_id, is_delete=0)
+            serializer = serializers.FamilySerializer(families, many=True)
+            response['data']['obj'] = serializer.data
+        else:
+            response['code'] = 1
+            response['msg'] = '用户为空'
+
         return Response(response, status=status.HTTP_200_OK)
 
 

@@ -68,5 +68,15 @@ export default new Router({
         showOther: true
       },
     },
+    {
+      path: '/account',
+      name: 'Account',
+      component: resolve => require(['@/views/account/Account.vue'], resolve),
+      meta: {
+        showHome: true,
+        requireAuth: true,
+        showOther: false
+      },
+    },
   ]
 })
