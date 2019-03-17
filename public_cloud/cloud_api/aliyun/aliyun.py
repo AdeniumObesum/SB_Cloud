@@ -50,7 +50,7 @@ class AliyunOperator(object):
         self.access_key = kwargs['access_key']
         self.secret_key = kwargs['secret_key']
         self.firm = models.FirmInfo.objects.filter(firm_key=100)[0]
-        self.account = models.AccountInfo.objects.filter(firm_id=self.firm.id, access_key=self.access_key)[0]
+        self.account = models.AccountInfo.objects.filter(firm_key=100, access_key=self.access_key)[0]
         pass
 
     def get_date_time(self, string):  ###获取datetime
@@ -67,7 +67,7 @@ class AliyunOperator(object):
             'Timestamp': self.get_utc(),
             'SignatureVersion': '1.0',
             'SignatureNonce': str(uuid.uuid4()),
-            'PageSize': 100
+            'PageSize': '100'
         }
         params = kwargs
         all_params = ChainMap(config, params)
@@ -75,9 +75,10 @@ class AliyunOperator(object):
         resp = requests.get(url=base_url, params=all_params)
         resp = json.loads(resp.content)
         response_pages.append(resp)
-        if resp['PageSize'] > resp['PageNum']:
-            config['PageNum'] = resp['PageNum'] + 1
-            self.request_2_aliyun(base_url=base_url, **config, response_pages=response_pages)
+        if 'PageSize' in resp:
+            if resp['PageSize'] > resp['PageNum']:
+                config['PageNum'] = str(int(resp['PageNum']) + 1)
+                self.request_2_aliyun(base_url=base_url, **config, response_pages=response_pages)
         return response_pages
 
     def get_utc(self):
@@ -110,7 +111,7 @@ class AliyunOperator(object):
         :return:
         '''
         regions = self.api_get_region_info()
-        db_all_info = models.RegionInfo.objects.filter(firm_id=self.firm.id, type=0, is_delete=0)
+        db_all_info = models.RegionInfo.objects.filter(firm_key=self.firm.firm_key, region_type=0, is_delete=0)
         api_region_list = [i['RegionId'] for i in regions]
 
         for info in db_all_info:
@@ -121,9 +122,10 @@ class AliyunOperator(object):
         for region in regions:
             models.RegionInfo.objects.update_or_create(
                 region_id=region['RegionId'],
-                firm_id=self.firm.id,
+                firm_key=self.firm.firm_key,
+                is_delete=0,
                 defaults={
-                    # 'firm_id': self.firm.id,
+                    # 'firm_key': self.firm.firm_key,
                     # 'region_id': region['RegionId'],
                     'region_type': 0,
                     'region_name': region['LocalName'],
@@ -136,7 +138,7 @@ class AliyunOperator(object):
         获取实例
         :return:
         """
-        regions = models.RegionInfo.objects.filter(firm_id=self.firm.id)
+        regions = models.RegionInfo.objects.filter(firm_key=self.firm.firm_key, is_delete=0)
         params = {
             'Action': 'DescribeInstances',
         }
@@ -155,7 +157,7 @@ class AliyunOperator(object):
         :return:
         """
         ecs_list = self.api_get_ecs()
-        db_all_info = models.HostInfo.objects.filter(firm_id=self.firm.id, account_id=self.account.id, is_delete=0)
+        db_all_info = models.HostInfo.objects.filter(firm_key=self.firm.firm_key, account_id=self.account.id, is_delete=0)
         api_ecs_list = [i['InstanceId'] for i in ecs_list]
 
         for info in db_all_info:
@@ -192,10 +194,11 @@ class AliyunOperator(object):
                 is_overdue = 2
             else:
                 is_overdue = 0
-            region = models.RegionInfo.objects.get(region_id=ecs['RegionId'], is_delete=0, firm_id=self.firm.id)
+            region = models.RegionInfo.objects.get(region_id=ecs['RegionId'], is_delete=0, firm_key=self.firm.firm_key)
             models.HostInfo.objects.update_or_create(
                 account_id=self.account.id,
                 instance_id=ecs['InstanceId'],
+                is_delete=0,
                 defaults={
                     # 'account_id': self.account.id,
                     # 'instance_id': ecs['InstanceId'],
@@ -218,7 +221,7 @@ class AliyunOperator(object):
             )
 
     def api_get_disks(self):
-        regions = models.RegionInfo.objects.filter(firm_id=self.firm.id)
+        regions = models.RegionInfo.objects.filter(firm_key=self.firm.firm_key)
         base_url = 'https://ecs.aliyuncs.com'
         params = {
             'Action': 'DescribeDisks'
@@ -234,7 +237,7 @@ class AliyunOperator(object):
 
     def api_get_disks_to_model(self):
         disks = self.api_get_disks()
-        db_all_info = models.DiskInfo.objects.filter(firm_id=self.firm.id, account_id=self.account.id, is_delete=0)
+        db_all_info = models.DiskInfo.objects.filter(firm_key=self.firm.firm_key, account_id=self.account.id, is_delete=0)
         api_disk_list = [i['DiskId'] for i in disks]
 
         for info in db_all_info:
@@ -278,13 +281,14 @@ class AliyunOperator(object):
             elif disk['DiskChargeType'] == 'PostPaid':
                 disk_charge_type = 1
 
-            region = models.RegionInfo.objects.get(region_id=disk['RegionId'], is_delete=0, firm_id=self.firm.id)
+            region = models.RegionInfo.objects.get(region_id=disk['RegionId'], is_delete=0, firm_key=self.firm.firm_key)
             instance = models.HostInfo.objects.get(is_delete=0, instance_id=disk['InstanceId'],
                                                    account_id=self.account.id)
 
             models.DiskInfo.objects.update_or_create(
                 account_id=self.account.id,
                 disk_id=disk['DiskId'],
+                is_delete=0,
                 defaults={
                     # account_id: self.account.id,
                     'region_id': region.id,

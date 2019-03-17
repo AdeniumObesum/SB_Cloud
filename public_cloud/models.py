@@ -18,11 +18,12 @@ class FirmInfo(models.Model):
     # # 0: 未导入   1：已导入
     # is_import = models.IntegerField('是否已导入用户', default=0)
     # # 0: 未开发   1：已开发
-    # is_dev = models.IntegerField('是否开发', default=0)
+    is_dev = models.IntegerField('是否开发', default=1)
 
     class Meta:
         verbose_name = '云厂商信息表'
         db_table = 'firm'
+
 
 class Family(models.Model):
     """
@@ -33,6 +34,7 @@ class Family(models.Model):
     family_name = models.CharField(verbose_name='家族名', max_length=100)
     create_time = models.DateTimeField(verbose_name='创建时间', default=datetime.datetime.now)
     is_delete = models.IntegerField(verbose_name='是否删除', default=0)
+
     # family_type_choices = (
     #     (0, 'common'),
     #     (1, 'noble'),
@@ -48,7 +50,7 @@ class AccountInfo(models.Model):
     """
     云账户信息表
     """
-    firm_id = models.IntegerField(verbose_name='云厂商id')
+    firm_key = models.IntegerField(verbose_name='云厂商key')
     family_id = models.IntegerField(verbose_name='家族id')
     access_key = models.CharField('accessKey', max_length=100, null=True)
     secret_key = models.CharField('secretKey', max_length=100, null=True)
@@ -63,11 +65,11 @@ class AccountInfo(models.Model):
 
 
 class RegionInfo(models.Model):
-    firm_id = models.IntegerField(verbose_name='云厂商id')
+    firm_key = models.IntegerField(verbose_name='云厂商key')
     # 主机可用区：0     存储可用区： 1   阿里云只有一种
 
     region_type = models.IntegerField(verbose_name='地区类型', null=True)
-    region_id = models.IntegerField(verbose_name='地区id')
+    region_id = models.CharField(verbose_name='地区id', max_length=100)
     region_name = models.CharField(verbose_name='汉语名称', max_length=100)
     end_point = models.CharField(verbose_name='域名', max_length=200)
 

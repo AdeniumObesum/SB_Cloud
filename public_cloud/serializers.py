@@ -45,3 +45,12 @@ class FamilySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Family
         fields = "__all__"
+
+
+class FirmSerializer(serializers.ModelSerializer):
+    """
+    云厂商序列化器
+    """
+    class Meta:
+       model = models.FirmInfo
+       fields = "__all__"

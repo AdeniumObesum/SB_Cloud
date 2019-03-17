@@ -16,4 +16,7 @@ urlpatterns = [
     # path('public_cloud/', include('public_cloud.urls')),
     path('create_family/', views.CreateFamily.as_view()),
     path('get_families/', views.GetFamily.as_view()),
+    path('get_accounts/', views.GetAccount.as_view()),
+    path('add_account/', views.AddAccount.as_view()),
+    path('get_firms/', views.GetFirm.as_view()),
 ]

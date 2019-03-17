@@ -163,11 +163,7 @@
       NavBarWidth() {
         let navBar = document.getElementById('nav-bar');
         if (!navBar) return;
-        if (!(this.fixedTabBar && this.switchTabBar)) {
-          navBar.style.width = '100%';
-          return;
-        }
-        let sidebarClose = document.body.classList.contains('sidebar-close')
+        let sidebarClose = document.body.classList.contains('sidebar-close');
         if (sidebarClose) {
           navBar.style.width = '100%';
           return;
@@ -184,7 +180,7 @@
           this.$message({
             message: '你的浏览器不支持全屏！',
             type: 'warning'
-          })
+          });
           return false
         }
         Screenfull.toggle();
@@ -192,11 +188,11 @@
       sidebarToggle(e) {
         e.preventDefault();
         if (this.isCollapse) {
-          document.body.classList.remove('sidebar-hidden')
-          this.siteName = this.$Config.siteName
+          document.body.classList.remove('sidebar-hidden');
+          this.siteName = this.$Config.siteName;
           this.isCollapse = false;
         } else {
-          document.body.classList.add('sidebar-hidden')
+          document.body.classList.add('sidebar-hidden');
           this.isCollapse = true;
         }
         this.NavBarWidth();
@@ -208,8 +204,7 @@
         this.NavBarWidth();
       },
       logout() {
-        // sessionStorage.removeItem(this.$Config.tokenKey);/
-        var user_token = this.$Func.getSessionData('user').user_token;
+        let user_token = this.$Func.getSessionData('user').user_token;
         console.log(user_token);
         let app = this;
         $.ajax({
@@ -250,6 +245,11 @@
     },
     updated() {
       let app = this;
+      if (app.currentFamily == undefined){
+        app.$router.push({
+          name: 'ChooseFamily'
+        })
+      }
     },
     watch: {
 

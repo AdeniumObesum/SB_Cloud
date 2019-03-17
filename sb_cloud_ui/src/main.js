@@ -54,6 +54,7 @@ $.ajaxSetup({
       Function.delSessionData('user');
       Function.delSessionData('families');
       Function.delSessionData('cur_family');
+      console.log('此时重登陆')
       Vue.$router.push({
         name: 'Login'
       })
@@ -64,6 +65,7 @@ $.ajaxSetup({
       Function.delSessionData('user');
       Function.delSessionData('families');
       Function.delSessionData('cur_family');
+      console.log('此时重登陆status')
       Vue.$router.push({
         name: 'Login'
       })
