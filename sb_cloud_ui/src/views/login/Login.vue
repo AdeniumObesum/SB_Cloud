@@ -78,7 +78,7 @@
               // app.$route.meta.keepAlive = true;
               // var tt = app.$cookieStore.getCookie('user_token');
               app.$router.push({
-                name: 'Home'
+                name: 'ChooseFamily'
               })
             }else {
               // app.$route.meta.keepAlive = false;

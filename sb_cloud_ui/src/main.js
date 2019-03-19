@@ -54,10 +54,7 @@ $.ajaxSetup({
       Function.delSessionData('user');
       Function.delSessionData('families');
       Function.delSessionData('cur_family');
-      console.log('此时重登陆')
-      Vue.$router.push({
-        name: 'Login'
-      })
+      window.location.href = '/login';
     }
   },
   statusCode:{
@@ -65,10 +62,8 @@ $.ajaxSetup({
       Function.delSessionData('user');
       Function.delSessionData('families');
       Function.delSessionData('cur_family');
-      console.log('此时重登陆status')
-      Vue.$router.push({
-        name: 'Login'
-      })
+      console.log('此时重登陆status');
+      window.location.href = '/login';
     }
   }
 });
