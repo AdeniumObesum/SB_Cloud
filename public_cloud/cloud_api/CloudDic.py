@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @File  : qcloud.py
+# @File  : CloudDic.py
 # @Author: Clare
-# @Date  : 2019/3/10 
+# @Date  : 2019/3/19 
 # @license : Copyright(C), Nanyang Institute of Technology 
 # @Contact : 1837866781@qq.com 
 # @Software : PyCharm
@@ -21,7 +21,11 @@ __pet__ = '''
                   ┃┫┫  ┃┫┫
                   ┗┻┛  ┗┻┛
 '''
-class QcloudOperator(object):
-    def __init__(self, **kwargs):
-        self.access_key = kwargs['access_key']
-        self.secret_key = kwargs['secret_key']
+
+from public_cloud.cloud_api.aliyun.aliyun import AliyunOperator
+from public_cloud.cloud_api.qcloud.qcloud import QcloudOperator
+
+CloudDic = {
+    '100': AliyunOperator,
+    '101': QcloudOperator
+}

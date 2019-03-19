@@ -67,7 +67,7 @@ class AliyunOperator(object):
             'Timestamp': self.get_utc(),
             'SignatureVersion': '1.0',
             'SignatureNonce': str(uuid.uuid4()),
-            'PageSize': '100'
+            'PageSize': '20'
         }
         params = kwargs
         all_params = ChainMap(config, params)
@@ -75,9 +75,10 @@ class AliyunOperator(object):
         resp = requests.get(url=base_url, params=all_params)
         resp = json.loads(resp.content)
         response_pages.append(resp)
+        print(resp)
         if 'PageSize' in resp:
-            if resp['PageSize'] > resp['PageNum']:
-                config['PageNum'] = str(int(resp['PageNum']) + 1)
+            if int(resp['TotalCount']) > int(resp['PageNumber']):
+                config['PageNumber'] = str(int(resp['PageNumber']) + 1)
                 self.request_2_aliyun(base_url=base_url, **config, response_pages=response_pages)
         return response_pages
 
@@ -157,7 +158,7 @@ class AliyunOperator(object):
         :return:
         """
         ecs_list = self.api_get_ecs()
-        db_all_info = models.HostInfo.objects.filter(firm_key=self.firm.firm_key, account_id=self.account.id, is_delete=0)
+        db_all_info = models.HostInfo.objects.filter(account_id=self.account.id)
         api_ecs_list = [i['InstanceId'] for i in ecs_list]
 
         for info in db_all_info:
@@ -198,7 +199,6 @@ class AliyunOperator(object):
             models.HostInfo.objects.update_or_create(
                 account_id=self.account.id,
                 instance_id=ecs['InstanceId'],
-                is_delete=0,
                 defaults={
                     # 'account_id': self.account.id,
                     # 'instance_id': ecs['InstanceId'],
@@ -216,7 +216,8 @@ class AliyunOperator(object):
                     'region_id': region.id,
                     'is_overdue': is_overdue,
                     'start_time': self.get_date_time(ecs['CreationTime']),
-                    'end_time': self.get_date_time(ecs['ExpiredTime'])
+                    'end_time': self.get_date_time(ecs['ExpiredTime']),
+                    'is_delete': 0,
                 }
             )
 
@@ -237,7 +238,8 @@ class AliyunOperator(object):
 
     def api_get_disks_to_model(self):
         disks = self.api_get_disks()
-        db_all_info = models.DiskInfo.objects.filter(firm_key=self.firm.firm_key, account_id=self.account.id, is_delete=0)
+        db_all_info = models.DiskInfo.objects.filter(firm_key=self.firm.firm_key, account_id=self.account.id,
+                                                     is_delete=0)
         api_disk_list = [i['DiskId'] for i in disks]
 
         for info in db_all_info:
@@ -299,7 +301,7 @@ class AliyunOperator(object):
                     'encrypted': disk['Encrypted'],
                     'disk_size': disk['Size'],
                     'disk_status': disk_status,
-                    'disk_charge_type':  disk_charge_type
+                    'disk_charge_type': disk_charge_type
                 }
             )
 

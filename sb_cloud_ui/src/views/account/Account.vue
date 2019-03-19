@@ -16,6 +16,9 @@
             <div style="margin-top: 13px">家族拥有者： <span style="color: #999999">{{user.username}}</span></div>
             <div style="margin-top: 13px">云账号数量： <span style="color: #999999">{{val.all_account_count}}</span></div>
             <div style="margin-top: 13px">创建时间： <span style="color: #999999">{{val.create_time}}</span></div>
+            <div class="bottom" style="float: left">
+              <el-button type="text" class="button" @click="showImport(val.family_id)">导入云主机</el-button>
+            </div>
             <div class="bottom clearfix">
               <el-button type="text" class="button" @click="addAccountForm(val.family_id)">导入账号</el-button>
             </div>
@@ -27,7 +30,7 @@
     <!--form-->
     <div>
       <el-dialog title="导入账户" :visible.sync="addAccountFormVisible" center>
-        <el-form :model="form_data"  ref="form_data" style="padding-left: 15%">
+        <el-form :model="form_data" ref="form_data" style="padding-left: 17%">
           <el-form-item label="云厂商" label-width="100px"
                         prop="firm_id"
                         :rules="[{required: true, message: '请选择云厂商', trigger: 'blur'}]"
@@ -58,6 +61,25 @@
         </div>
       </el-dialog>
     </div>
+    <div>
+      <el-dialog title="导入云主机" :visible.sync="importHostVisible" center>
+        <el-table :data="accountData" stripe max-height="300">
+          <el-table-column property="account_id" label="账户" width="100"></el-table-column>
+          <el-table-column property="firm_name" label="云厂商" width="120"></el-table-column>
+          <el-table-column property="status" label="账户状态" width="120"></el-table-column>
+          <el-table-column property="create_date" label="创建日期" width="150"></el-table-column>
+          <el-table-column
+            fixed="right"
+            label="操作"
+            width="100">
+            <template slot-scope="scope">
+              <el-button @click="importHost(scope.row)" type="text" size="small">导入</el-button>
+              <el-button type="text" size="small">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-dialog>
+    </div>
     <!--form_end-->
   </div>
 </template>
@@ -68,9 +90,11 @@
     data() {
       return {
         addAccountFormVisible: false,
+        importHostVisible: false,
         user: {},
         families: [],
         firm_options: [],
+        accountData: [],
         form_data: {
           app_id: '',
           firm_id: '',
@@ -142,7 +166,7 @@
                     offset: 50
                   });
                   app.getAccounts();
-                }else {
+                } else {
                   app.$notify({
                     title: '提示',
                     message: data.msg,
@@ -169,6 +193,54 @@
         let app = this;
         app.form_data.family_id = family_id;
         app.addAccountFormVisible = true;
+      },
+      showImport: function (family_id) {
+        let app = this;
+        this.importHostVisible = true;
+        $.ajax({
+          url: app.$base_url + '/public_cloud/get_account_detail/',
+          type: 'post',
+          dataType: 'json',
+          data: {user_id: app.user.user_id, user_token: app.user.user_token, family_id: family_id},
+          success: function (data) {
+            if (data.code == 0) {
+              app.accountData = data.data.obj;
+            }
+          }
+        })
+      },
+      importHost: function (data) {
+        let app = this;
+        const loading = app.$loading({
+          lock: true,
+          text: '快马加鞭导入中，请稍后',
+          spinner: 'el-icon-loading',
+          background: 'rgba(0, 0, 0, 0.7)'
+        });
+        $.ajax({
+          url: app.$base_url + '/public_cloud/import_host/',
+          type: 'post',
+          dataType: 'json',
+          data: {user_id: app.user.user_id, user_token: app.user.user_token, account_id: data.account_id, firm_key: data.firm_key},
+          success: function (data) {
+            loading.close();
+            if (data.code == 0) {
+              app.$notify({
+                message: data.msg,
+                type: 'success',
+                title: '提示',
+                offset: 50
+              })
+            }else {
+              app.$notify({
+                message: data.msg,
+                type: 'error',
+                title: '提示',
+                offset: 50
+              })
+            }
+          }
+        })
       }
     }
   }

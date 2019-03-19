@@ -19,4 +19,6 @@ urlpatterns = [
     path('get_accounts/', views.GetAccount.as_view()),
     path('add_account/', views.AddAccount.as_view()),
     path('get_firms/', views.GetFirm.as_view()),
+    path('get_account_detail/', views.GetAccountDetail.as_view()),
+    path('import_host/', views.ImportHost.as_view()),
 ]

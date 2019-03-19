@@ -1,3 +1,5 @@
+import traceback
+
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -6,6 +8,7 @@ from myauth import auth
 from public_cloud import ResponseData
 from public_cloud import models
 from public_cloud import serializers
+from public_cloud.cloud_api.CloudDic import CloudDic
 
 
 class CreateFamily(APIView):
@@ -94,7 +97,7 @@ class AddAccount(APIView):
 
 class GetAccount(APIView):
     """
-    获取账户详情
+    获取账户概要
     """
     authentication_classes = [auth.MyAuthentication]
 
@@ -108,13 +111,50 @@ class GetAccount(APIView):
         # ali.api_get_region_info_to_model()
         families = models.Family.objects.filter(user_id=user_id, is_delete=0)
         data = []
-
+        # datetime.datetime.fromtimestamp(t).strftime('%Y-%m-%d %H:%M:%S')
         for family in families:
             one_data = {}
             one_data['family_name'] = family.family_name
             one_data['family_id'] = family.id
-            one_data['create_time'] = family.create_time
+            one_data['create_time'] = family.create_time.strftime('%Y-%m-%d')
             one_data['all_account_count'] = models.AccountInfo.objects.filter(family_id=family.id, is_delete=0).count()
+            data.append(one_data)
+
+        response['data']['obj'] = data
+
+        return Response(response, status=status.HTTP_200_OK)
+
+
+class GetAccountDetail(APIView):
+    """
+    获取账户详情
+    """
+    authentication_classes = [auth.MyAuthentication]
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(GetAccountDetail, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        response = ResponseData.ResponseData().response_data()
+        # user_id = request.data.get('user_id', '')
+        # ali = aliyun.AliyunOperator(access_key='LTAIkLqvvsa0zXcZ', secret_key='TQ7LLCxyPwVEwSSvSKzO5PdN4j2lfZ')
+        # ali.api_get_region_info_to_model()
+        status_enum = {
+            0: '未知',
+            1: '可用',
+            2: '不可用'
+        }
+        family_id = request.data.get('family_id', '')
+        accounts = models.AccountInfo.objects.filter(family_id=family_id, is_delete=0)
+        data = []
+        # time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        for account in accounts:
+            one_data = {}
+            one_data['account_id'] = account.id
+            one_data['firm_name'] = models.FirmInfo.objects.get(firm_key=account.firm_key).zh_name
+            one_data['firm_key'] = account.firm_key
+            one_data['status'] = status_enum[account.account_status]
+            one_data['create_date'] = account.create_at.strftime('%Y-%m-%d')
             data.append(one_data)
 
         response['data']['obj'] = data
@@ -136,6 +176,30 @@ class GetFirm(APIView):
         firms = models.FirmInfo.objects.filter()
         serializer = serializers.FirmSerializer(firms, many=True)
         response['data']['obj'] = serializer.data
+        return Response(response, status=status.HTTP_200_OK)
+
+
+class ImportHost(APIView):
+    """
+    导入云主机
+    """
+    authentication_classes = [auth.MyAuthentication]
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(ImportHost, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        response = ResponseData.ResponseData().response_data()
+        account_id = request.data.get('account_id', '')
+        firm_key = request.data.get('firm_key', '')
+        account = models.AccountInfo.objects.get(id=account_id)
+        try:
+            CloudDic[firm_key](access_key=account.access_key, secret_key=account.secret_key).api_get_ecs_to_model()
+            response['msg'] = '已导入，请到资源管理页面查看主机'
+        except Exception as e:
+            traceback.print_exc()
+            response['code'] = 1
+            response['msg'] = '导入主机失败，请检查密匙是否可用'
         return Response(response, status=status.HTTP_200_OK)
 
 

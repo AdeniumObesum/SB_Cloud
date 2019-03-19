@@ -232,9 +232,8 @@
           id: cur_family_id,
           name: cur_family_name
         };
-        console.log('to family')
         app.$Func.setSessionData('cur_family', cur_family);
-        window.location.reload();
+        app.currentFamily = cur_family;
       },
       toAddFamily: function () {
         let app = this;
@@ -243,18 +242,16 @@
         })
       }
     },
-    updated() {
-      let app = this;
-      if (app.currentFamily == undefined){
-        app.$router.push({
-          name: 'ChooseFamily'
-        })
-      }
-    },
     watch: {
+      '$route': function () {
+        let app = this;
+        console.log('路由变化');
+        app.currentFamily = app.$Func.getSessionData('cur_family');
+      }
 
     },
     mounted: function () {
+      let app = this;
       if (!this.isCollapse) {
 
         document.body.classList.remove('sidebar-hidden')
@@ -265,11 +262,19 @@
 
       setTimeout(() => {
         this.NavBarWidth();
-      }, 1000)
+      }, 1000);
+      // if (app.currentFamily == undefined){
+      //   app.$router.push({
+      //     name: 'ChooseFamily'
+      //   })
+      // }else {
+      //   app.currentFamily = app.$Func.getSessionData('cur_family')
+      // }
     },
     components: {
       EuiFooter, NavBar
     },
+
   }
 </script>
 <style lang="less">

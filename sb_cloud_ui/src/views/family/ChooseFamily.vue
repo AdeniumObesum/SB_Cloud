@@ -31,7 +31,7 @@
             <template v-for="item in families">
             <el-col :span="5">
               <div style="display: inline-block" @click="toFamily(item.id, item.family_name)">
-                <el-card shadow="hover" style="margin-top: 15px;cursor: pointer">
+                <el-card shadow="hover" style="margin-top: 15px;cursor: pointer;height: 60px">
                   <!--family{{ val }}-->
                   {{item.family_name}}
                 </el-card>
@@ -104,7 +104,7 @@
         };
         app.$Func.setSessionData('cur_family', cur_family);
         app.$router.push({
-          name: 'Home',
+          name: 'Home'
         });
       },
       createFamily: function () {
