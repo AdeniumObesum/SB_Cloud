@@ -24,7 +24,7 @@ let resource_manager = menu.resource_manager.children;
 
 resource_manager.host = {
   name: '云主机',
-  path: '/host',
+  path: '/host_list',
 
 };
 resource_manager.storage = {

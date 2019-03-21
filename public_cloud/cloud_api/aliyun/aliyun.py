@@ -75,9 +75,9 @@ class AliyunOperator(object):
         resp = requests.get(url=base_url, params=all_params)
         resp = json.loads(resp.content)
         response_pages.append(resp)
-        print(resp)
+        # print(resp)
         if 'PageSize' in resp:
-            if int(resp['TotalCount']) > int(resp['PageNumber']):
+            if int(resp['TotalCount'])/int(resp['PageSize']) > int(resp['PageNumber']):
                 config['PageNumber'] = str(int(resp['PageNumber']) + 1)
                 self.request_2_aliyun(base_url=base_url, **config, response_pages=response_pages)
         return response_pages
@@ -149,6 +149,7 @@ class AliyunOperator(object):
             params['RegionId'] = region.region_id
             ecs_pages = self.request_2_aliyun(base_url=base_url, **params)
             for one_page in ecs_pages:
+                print(one_page)
                 response_list += one_page['Instances']['Instance']
         return response_list
 
@@ -207,9 +208,9 @@ class AliyunOperator(object):
                     'instance_type': instance_type,
                     'instance_status': instance_status,
                     'instance_pub_ip': ecs['PublicIpAddress']['IpAddress'][0],
-                    'instance_pri_ip': ecs['InnerIpAddress']['IpAddress'][0],
-                    'instance_vpc_ip': ecs['VpcAttributes']['PrivateIpAddress']['IpAddress'][0],
-                    'network_interface_id': ecs['NetworkInterfaces']['NetworkInterface']['MacAddress'],
+                    'instance_pri_ip': ecs['InnerIpAddress']['IpAddress'][0] if ecs['InnerIpAddress']['IpAddress'] else ecs['VpcAttributes']['PrivateIpAddress']['IpAddress'][0],
+                    'instance_vpc_ip': ecs['VpcAttributes']['PrivateIpAddress']['IpAddress'][0] if ecs['VpcAttributes']['PrivateIpAddress']['IpAddress'] else '',
+                    'network_interface_id': ecs['NetworkInterfaces']['NetworkInterface'][0]['NetworkInterfaceId'],
                     'internet_charge_type': internet_charge_type,
                     'instance_charge_type': instance_charge_type,
                     'price_per_hour': ecs['SpotPriceLimit'],

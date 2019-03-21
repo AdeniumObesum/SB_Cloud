@@ -78,5 +78,15 @@ export default new Router({
         showOther: false
       },
     },
+    {
+      path: '/host_list',
+      name: 'HostList',
+      component: resolve => require(['@/views/host/HostList.vue'], resolve),
+      meta: {
+        showHome: true,
+        requireAuth: true,
+        showOther: false
+      },
+    },
   ]
 })

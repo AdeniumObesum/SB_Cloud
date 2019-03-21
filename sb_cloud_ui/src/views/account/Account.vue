@@ -64,9 +64,9 @@
     <div>
       <el-dialog title="导入云主机" :visible.sync="importHostVisible" center>
         <el-table :data="accountData" stripe max-height="300">
-          <el-table-column property="account_id" label="账户" width="100"></el-table-column>
+          <el-table-column property="access_key" label="账户" width="150"></el-table-column>
           <el-table-column property="firm_name" label="云厂商" width="120"></el-table-column>
-          <el-table-column property="status" label="账户状态" width="120"></el-table-column>
+          <el-table-column property="status" label="账户状态" width="100"></el-table-column>
           <el-table-column property="create_date" label="创建日期" width="150"></el-table-column>
           <el-table-column
             fixed="right"
@@ -157,30 +157,28 @@
                 secret_key: app.form_data.secret_key
               },
               success: function (data) {
+                app.addAccountFormVisible = false;
                 if (data.code == 0) {
                   // app.families = data.data.obj;
-                  app.$notify({
-                    title: '提示',
+                  app.$message({
                     message: data.msg,
                     type: 'success',
-                    offset: 50
+                    center: true
                   });
                   app.getAccounts();
                 } else {
-                  app.$notify({
-                    title: '提示',
+                  app.$message({
                     message: data.msg,
                     type: 'warning',
-                    offset: 50
+                    center: true
                   });
                 }
               },
               error: function () {
-                app.$notify({
-                  title: '提示',
+                app.$message({
                   message: '出错了！',
                   type: 'error',
-                  offset: 50
+                  center: true
                 });
               }
             })
@@ -223,20 +221,19 @@
           dataType: 'json',
           data: {user_id: app.user.user_id, user_token: app.user.user_token, account_id: data.account_id, firm_key: data.firm_key},
           success: function (data) {
+            app.importHostVisible = false;
             loading.close();
             if (data.code == 0) {
-              app.$notify({
+              app.$message({
                 message: data.msg,
                 type: 'success',
-                title: '提示',
-                offset: 50
+                center: true
               })
             }else {
-              app.$notify({
+              app.$message({
                 message: data.msg,
                 type: 'error',
-                title: '提示',
-                offset: 50
+                center: true
               })
             }
           }

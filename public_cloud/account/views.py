@@ -151,6 +151,7 @@ class GetAccountDetail(APIView):
         for account in accounts:
             one_data = {}
             one_data['account_id'] = account.id
+            one_data['access_key'] = account.access_key
             one_data['firm_name'] = models.FirmInfo.objects.get(firm_key=account.firm_key).zh_name
             one_data['firm_key'] = account.firm_key
             one_data['status'] = status_enum[account.account_status]
