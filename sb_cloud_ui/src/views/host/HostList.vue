@@ -13,44 +13,42 @@
               </template>
             </el-dropdown-menu>
           </el-dropdown>
-
         </el-row>
       </el-header>
       <el-table
-        :data="usersData"
+        :data="hostsData"
         ref="table"
         style="width: 100%">
         <el-table-column
-          prop="loginname"
+          prop="instance_name"
           label="实例名称">
         </el-table-column>
         <el-table-column
-          prop="nickname"
+          prop="os_name"
           label="系统版本">
         </el-table-column>
         <el-table-column
-          prop="email"
+          prop="instance_type"
           label="系统类型">
         </el-table-column>
         <el-table-column
-          prop="cellphone"
+          prop="instance_status"
           label="状态">
         </el-table-column>
         <el-table-column
-          prop="result"
+          prop="instance_pub_ip"
           label="公网IP">
           <div slot-scope="scope" style="width: 100%;text-align: center">{{ scope.row.result ?
             $Config.tizhiCategories[scope.row.result]:'未判定' }}
           </div>
         </el-table-column>
         <el-table-column
-          prop="sex"
-          width="66"
+          prop="instance_pri_ip"
           label="私有网络IP">
           <div slot-scope="scope" style="width: 100%;text-align: center">{{ $Config.sex[scope.row.sex] }}</div>
         </el-table-column>
         <el-table-column
-          prop="active"
+          prop="end_time"
           width="100"
           label="到期时间">
           <div slot-scope="scope" style="width: 100%;text-align: center">
@@ -63,8 +61,8 @@
           label="操作"
           width="180">
           <template slot-scope="scope">
-            <el-button @click="" type="warning" style="transition: .4s;"  :ref="scope.row.id"  icon="el-icon-refresh" size="small" circle></el-button>
-            <el-button @click="" type="primary" icon="el-icon-edit" size="small" circle></el-button>
+            <el-button @click="" type="warning" style="transition: .4s;"  :ref="scope.row.id" size="small" circle>开机</el-button>
+            <el-button @click="" type="primary" icon="el-icon-edit" size="small" circle>关机</el-button>
             <!--<el-button @click="deleteUser(scope.row.id)" v-if="scope.row.active != '0'" type="danger" icon="el-icon-delete" circle size="small"></el-button>-->
             <!--<el-button @click="deleteUser(scope.row.id)" v-else icon="el-icon-check" circle size="small"></el-button>-->
           </template>
@@ -93,7 +91,7 @@
         cur_family: {},
         user: {},
         firms: [],
-        usersData: [
+        hostsData: [
           {id:1,loginname:'Admin',nickname:'管理员',email:'Admin@.admin.com',cellphone:'151178xxxx',sex:'male',active:1},
           {id:2,loginname:'SenLin',nickname:'森林',email:'SenLin@.admin.com',cellphone:'151178xxxx',sex:'unknown',active:0},
           {id:4,loginname:'Admin1',nickname:'赵晓',email:'Admin@.admin.com',cellphone:'151178xxxx',sex:'male',active:1},

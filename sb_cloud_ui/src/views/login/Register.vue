@@ -71,7 +71,7 @@
         let app = this;
         app.loginLoading = true;
         $.ajax({
-          url: window.host + '/login/',
+          url:app.$base_url + '/register/',
           // url: 'http://127.0.0.1:8000/login/',
           type: 'POST',
           dataType: 'json',
@@ -89,7 +89,7 @@
 
               // 3秒后去登录
               setTimeout(function () {
-                
+
               },2000);
               app.$router.push({
                 name: 'Login',

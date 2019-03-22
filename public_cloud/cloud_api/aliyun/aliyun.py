@@ -50,7 +50,10 @@ class AliyunOperator(object):
         self.access_key = kwargs['access_key']
         self.secret_key = kwargs['secret_key']
         self.firm = models.FirmInfo.objects.filter(firm_key=100)[0]
-        self.account = models.AccountInfo.objects.filter(firm_key=100, access_key=self.access_key)[0]
+        try:
+            self.account = models.AccountInfo.objects.filter(firm_key=100, access_key=self.access_key)[0]
+        except Exception as e:
+            self.account = None
         pass
 
     def get_date_time(self, string):  ###获取datetime

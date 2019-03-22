@@ -107,8 +107,12 @@ class GetAccount(APIView):
     def post(self, request, *args, **kwargs):
         response = ResponseData.ResponseData().response_data()
         user_id = request.data.get('user_id', '')
-        # ali = aliyun.AliyunOperator(access_key='LTAIkLqvvsa0zXcZ', secret_key='TQ7LLCxyPwVEwSSvSKzO5PdN4j2lfZ')
+
+        #
+        # ali = CloudDic['100'](access_key='LTAIkLqvvsa0zXcZ', secret_key='TQ7LLCxyPwVEwSSvSKzO5PdN4j2lfZ')
         # ali.api_get_region_info_to_model()
+
+
         families = models.Family.objects.filter(user_id=user_id, is_delete=0)
         data = []
         # datetime.datetime.fromtimestamp(t).strftime('%Y-%m-%d %H:%M:%S')
