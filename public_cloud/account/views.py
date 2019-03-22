@@ -254,7 +254,7 @@ class GetHost(APIView):
         for account in accounts:
             hosts = models.HostInfo.objects.filter(account_id=account.id, is_delete=0)
             serializer = serializers.HostInfoSerializer(hosts, many=True)
-            data.append(serializer.data)
+            data += serializer.data
         response['data']['obj'] = data
 
         return Response(response, status=status.HTTP_200_OK)

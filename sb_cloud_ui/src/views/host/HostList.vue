@@ -38,31 +38,26 @@
         <el-table-column
           prop="instance_pub_ip"
           label="公网IP">
-          <div slot-scope="scope" style="width: 100%;text-align: center">{{ scope.row.result ?
-            $Config.tizhiCategories[scope.row.result]:'未判定' }}
-          </div>
+          <!--<div slot-scope="scope" style="width: 100%;text-align: center">  传值方式-->
+          <!--</div>-->
         </el-table-column>
         <el-table-column
           prop="instance_pri_ip"
           label="私有网络IP">
-          <div slot-scope="scope" style="width: 100%;text-align: center">{{ $Config.sex[scope.row.sex] }}</div>
+          <!--<div slot-scope="scope" style="width: 100%;text-align: center">{{ $Config.sex[scope.row.sex] }}</div>-->
         </el-table-column>
         <el-table-column
           prop="end_time"
-          width="100"
           label="到期时间">
-          <div slot-scope="scope" style="width: 100%;text-align: center">
-            <el-tag v-if="scope.row.active">正常</el-tag>
-            <el-tag v-else type="danger">被删除</el-tag>
-          </div>
+          <!--<div slot-scope="scope" style="width: 100%;text-align: center">-->
+          <!--</div>-->
         </el-table-column>
         <el-table-column
           fixed="right"
-          label="操作"
-          width="180">
+          label="操作">
           <template slot-scope="scope">
-            <el-button @click="" type="warning" style="transition: .4s;"  :ref="scope.row.id" size="small" circle>开机</el-button>
-            <el-button @click="" type="primary" icon="el-icon-edit" size="small" circle>关机</el-button>
+            <el-button @click="" type="warning" size="small" v-if="scope.row.status === 0">关机</el-button>
+            <el-button @click="" type="primary" style="transition: .4s;"  :ref="scope.row.id" size="small" v-else>开机</el-button>
             <!--<el-button @click="deleteUser(scope.row.id)" v-if="scope.row.active != '0'" type="danger" icon="el-icon-delete" circle size="small"></el-button>-->
             <!--<el-button @click="deleteUser(scope.row.id)" v-else icon="el-icon-check" circle size="small"></el-button>-->
           </template>
@@ -92,11 +87,11 @@
         user: {},
         firms: [],
         hostsData: [
-          {id:1,loginname:'Admin',nickname:'管理员',email:'Admin@.admin.com',cellphone:'151178xxxx',sex:'male',active:1},
-          {id:2,loginname:'SenLin',nickname:'森林',email:'SenLin@.admin.com',cellphone:'151178xxxx',sex:'unknown',active:0},
-          {id:4,loginname:'Admin1',nickname:'赵晓',email:'Admin@.admin.com',cellphone:'151178xxxx',sex:'male',active:1},
-          {id:5,loginname:'Wujun',nickname:'吴军',email:'Admin@.admin.com',cellphone:'151178xxxx',sex:'male',active:1},
-          {id:5,loginname:'Huang',nickname:'黄家',email:'Admin@.admin.com',cellphone:'151178xxxx',sex:'male',active:1},
+          // {id:1,loginname:'Admin',nickname:'管理员',email:'Admin@.admin.com',cellphone:'151178xxxx',sex:'male',active:1},
+          // {id:2,loginname:'SenLin',nickname:'森林',email:'SenLin@.admin.com',cellphone:'151178xxxx',sex:'unknown',active:0},
+          // {id:4,loginname:'Admin1',nickname:'赵晓',email:'Admin@.admin.com',cellphone:'151178xxxx',sex:'male',active:1},
+          // {id:5,loginname:'Wujun',nickname:'吴军',email:'Admin@.admin.com',cellphone:'151178xxxx',sex:'male',active:1},
+          // {id:5,loginname:'Huang',nickname:'黄家',email:'Admin@.admin.com',cellphone:'151178xxxx',sex:'male',active:1},
         ]
       }
     },
@@ -136,6 +131,17 @@
       },
       getHosts: function () {
         let app = this;
+        $.ajax({
+          url: this.$base_url + '/public_cloud/get_hosts/',
+          type: 'post',
+          dataType: 'json',
+          data: {user_token: app.user.user_token, family_id: app.cur_family.id,firm_key: app.cur_firm.firm_key},
+          success: function (data) {
+            if (data.code == 0) {
+              app.hostsData = data.data.obj;
+            }
+          }
+        });
       }
     },
     components: {}
