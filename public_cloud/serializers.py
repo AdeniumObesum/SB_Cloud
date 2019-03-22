@@ -54,3 +54,12 @@ class FirmSerializer(serializers.ModelSerializer):
     class Meta:
        model = models.FirmInfo
        fields = "__all__"
+
+
+class HostInfoSerializer(serializers.ModelSerializer):
+    """
+    云厂商序列化器
+    """
+    class Meta:
+        model = models.HostInfo
+        fields = "__all__"

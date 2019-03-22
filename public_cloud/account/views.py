@@ -208,8 +208,49 @@ class GetFamilyFirm(APIView):
     """
     获取该Family拥有的云厂商
     """
+    authentication_classes = [auth.MyAuthentication]
 
     def dispatch(self, request, *args, **kwargs):
         return super(GetFamilyFirm, self).dispatch(request, *args, **kwargs)
 
+    def post(self, request, *args, **kwargs):
+        response = ResponseData.ResponseData().response_data()
+        family_id = request.data.get('family_id', '')
+        dic = {}
+        data = []
+        accounts = models.AccountInfo.objects.filter(family_id=family_id, is_delete=0)
+        for account in accounts:
+            dic[account.firm_key] = models.FirmInfo.objects.get(firm_key=account.firm_key).zh_name
+
+        for key, value in dic.items():
+            new_dic = {}
+            new_dic['firm_key'] = key
+            new_dic['firm_name'] = value
+            data.append(new_dic)
+        response['data']['obj'] = data
+        return Response(response, status=status.HTTP_200_OK)
+
     pass
+
+
+class GetHost(APIView):
+    """获取主机"""
+
+    authentication_classes = [auth.MyAuthentication]
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(GetHost, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        response = ResponseData.ResponseData().response_data()
+        family_id = request.data.get('family_id', '')
+        firm_key = request.data.get('firm_key', '')
+        accounts = models.AccountInfo.objects.filter(family_id=family_id, firm_key=firm_key, is_delete=0)
+        data = []
+        for account in accounts:
+            hosts = models.HostInfo.objects.filter(account_id=account.id, is_delete=0)
+            serializer = serializers.HostInfoSerializer(hosts, many=True)
+            data.append(serializer.data)
+        response['data']['obj'] = data
+
+        return Response(response, status=status.HTTP_200_OK)
