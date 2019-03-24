@@ -88,5 +88,25 @@ export default new Router({
         showOther: false
       },
     },
+    {
+      path: '/disk_list',
+      name: 'DiskList',
+      component: resolve => require(['@/views/backup/DiskList.vue'], resolve),
+      meta: {
+        showHome: true,
+        requireAuth: true,
+        showOther: false
+      },
+    },
+    {
+      path: '/snapshot_list',
+      name: 'SnapshotList',
+      component: resolve => require(['@/views/backup/SnapshotList.vue'], resolve),
+      meta: {
+        showHome: true,
+        requireAuth: true,
+        showOther: false
+      },
+    },
   ]
 })

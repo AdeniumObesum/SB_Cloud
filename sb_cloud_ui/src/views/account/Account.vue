@@ -1,7 +1,7 @@
 <template>
   <div>
-    <el-row :gutter="0" style="padding-left: 2%;padding-top: 2%;padding-right: 1%">
-      <div style="height: 50px;border-bottom: 1px #999999 solid">
+    <el-row :gutter="0" style="padding-left: 2%;padding-top: 1%;padding-right: 1%">
+      <div style="height: 40px;border-bottom: 1px #999999 solid">
         <span>我的Family<span style="color: #666666">（{{families.length}}个）</span></span>
       </div>
       <!--<hr style="margin-top: 30px;color: #e6e6e6">-->
@@ -223,6 +223,7 @@
           success: function (data) {
             app.importHostVisible = false;
             loading.close();
+            console.log(data);
             if (data.code == 0) {
               app.$message({
                 message: data.msg,

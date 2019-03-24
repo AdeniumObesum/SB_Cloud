@@ -16,63 +16,52 @@
         </el-row>
       </el-header>
       <el-table
-        :data="hostsData"
+        :data="snapshotsData"
         ref="table"
         style="width: 100%">
         <el-table-column
-        width="60">
+          width="200">
           <div slot-scope="scope">
             <div class="linux" style="width: 32px;height: 32px" v-if="scope.row.instance_type_id == 0"></div>
             <div class="windows" style="width: 32px;height: 32px" v-else></div>
+            <span>{{scope.row.instance_name}}</span>
+            <div>
+              <span>公网IP：{{scope.row.pub_ip}}</span>
+              <p></p>
+              <span>内网IP：{{scope.row.pri_ip}}</span>
+            </div>
           </div>
         </el-table-column>
         <el-table-column
-          prop="instance_name"
-          label="实例名称">
+          prop="disk_name"
+          label="磁盘名">
         </el-table-column>
         <el-table-column
-          prop="os_name"
-          label="系统版本">
+          prop="snapshot_name"
+          label="快照名">
         </el-table-column>
         <el-table-column
-          prop="instance_type"
-          label="系统类型">
+          prop="source_disk_size"
+          label="源磁盘容量(G)">
         </el-table-column>
         <el-table-column
-          prop="instance_status"
-          label="状态">
-          <div slot-scope="scope">
-            <span style="color: forestgreen" v-if="scope.row.instance_status_id == 0">
-              {{scope.row.instance_status}}
-            </span>
-            <span style="color: red" v-else-if="scope.row.instance_status_id == 3">
-              {{scope.row.instance_status}}
-            </span>
-          </div>
-        </el-table-column>
-        <el-table-column
-          prop="instance_pub_ip"
-          label="公网IP">
+          prop="snapshot_create_time"
+          label="创建时间">
           <!--<div slot-scope="scope" style="width: 100%;text-align: center">  传值方式-->
           <!--</div>-->
         </el-table-column>
         <el-table-column
-          prop="instance_pri_ip"
-          label="私有网络IP">
-          <!--<div slot-scope="scope" style="width: 100%;text-align: center">{{ $Config.sex[scope.row.sex] }}</div>-->
-        </el-table-column>
-        <el-table-column
-          prop="end_time"
-          label="到期时间">
-          <!--<div slot-scope="scope" style="width: 100%;text-align: center">-->
-          <!--</div>-->
-        </el-table-column>
-        <el-table-column
           fixed="right"
-          label="操作">
+          label="操作"
+          width="100">
           <template slot-scope="scope">
-            <el-button @click="stopInstance(scope.row.instance_id, scope.row.account_id)" type="warning" size="small" v-if="scope.row.instance_status_id == 0">关机</el-button>
-            <el-button @click="startInstance(scope.row.instance_id, scope.row.account_id)" type="primary" style="transition: .4s;"  :ref="scope.row.id" size="small" v-else>开机</el-button>
+            <span>
+              <el-button @click="" type="error" style="transition: .4s;"  :ref="scope.row.id" size="mini">删除</el-button>
+            </span>
+            <span style="margin-top: 10px">
+              <el-button @click="" type="warning" style="transition: .4s;"  :ref="scope.row.id" size="mini">回滚</el-button>
+            </span>
+
             <!--<el-button @click="deleteUser(scope.row.id)" v-if="scope.row.active != '0'" type="danger" icon="el-icon-delete" circle size="small"></el-button>-->
             <!--<el-button @click="deleteUser(scope.row.id)" v-else icon="el-icon-check" circle size="small"></el-button>
              v-if="scope.row.status === 0"
@@ -81,36 +70,40 @@
           </template>
         </el-table-column>
       </el-table>
+      <el-row style="text-align: right;margin-top: 15px">
+        <el-pagination
+          background
+          layout="prev, pager, next"
+          :total="total"
+          :page-size="perPage"
+          @current-change="changePage">
+        </el-pagination>
+      </el-row>
     </el-container>
 
   </div>
-
-
 </template>
 
 <script>
   export default {
-    name: "HostList",
+    name: "SnapshotList",
     data() {
       return {
         firm_id: '',
         params: {
           name: '',
         },
-        cur_firm:{
+        cur_firm: {
           firm_key: '',
           firm_name: ''
         },
         cur_family: {},
         user: {},
         firms: [],
-        hostsData: [
-          // {id:1,loginname:'Admin',nickname:'管理员',email:'Admin@.admin.com',cellphone:'151178xxxx',sex:'male',active:1},
-          // {id:2,loginname:'SenLin',nickname:'森林',email:'SenLin@.admin.com',cellphone:'151178xxxx',sex:'unknown',active:0},
-          // {id:4,loginname:'Admin1',nickname:'赵晓',email:'Admin@.admin.com',cellphone:'151178xxxx',sex:'male',active:1},
-          // {id:5,loginname:'Wujun',nickname:'吴军',email:'Admin@.admin.com',cellphone:'151178xxxx',sex:'male',active:1},
-          // {id:5,loginname:'Huang',nickname:'黄家',email:'Admin@.admin.com',cellphone:'151178xxxx',sex:'male',active:1},
-        ]
+        snapshotsData: [],
+        allSnapshotData: [],
+        total: 0,
+        perPage: 3,
       }
     },
     mounted: function () {
@@ -134,7 +127,7 @@
               if (app.firms.length > 0){
                 app.cur_firm.firm_key = app.firms[0].firm_key;
                 app.cur_firm.firm_name = app.firms[0].firm_name;
-                app.getHosts();
+                app.getSnapshots();
               }
             }
           }
@@ -145,88 +138,29 @@
         let app = this;
         app.cur_firm.firm_key = firm_key;
         app.cur_firm.firm_name = firm_name;
-        app.getHosts();
+        app.getSnapshots();
       },
-      getHosts: function () {
+      getSnapshots: function () {
         let app = this;
         $.ajax({
-          url: this.$base_url + '/public_cloud/get_hosts/',
+          url: this.$base_url + '/public_cloud/get_snapshots/',
           type: 'post',
           dataType: 'json',
           data: {user_token: app.user.user_token, family_id: app.cur_family.id,firm_key: app.cur_firm.firm_key},
           success: function (data) {
             if (data.code == 0) {
-              app.hostsData = data.data.obj;
+              app.allSnapshotData = data.data.obj;
+              app.snapshotsData = app.allSnapshotData.slice(0,app.perPage);
+              app.total = app.allSnapshotData.length;
             }
           }
         });
       },
-      stopInstance: function (instance_id, account_id) {
+      changePage: function (curPage) {
         let app = this;
-        const loading = this.$loading({
-          lock: true,
-          text: '执行中，请稍后',
-          spinner: 'el-icon-loading',
-          background: 'rgba(0, 0, 0, 0.7)'
-        });
-        $.ajax({
-          url: this.$base_url + '/public_cloud/stop_instance/',
-          type: 'post',
-          dataType: 'json',
-          data: {user_token: app.user.user_token,firm_key: app.cur_firm.firm_key,instance_id:instance_id, account_id: account_id},
-          success: function (data) {
-            loading.close();
-            if (data.code == 0) {
-              app.$message({
-                type: 'success',
-                message: data.msg,
-                center: true
-              });
-              app.getHosts();
-            }else {
-              app.$message({
-                type: 'error',
-                message: data.msg,
-                center: true
-              })
-            }
-          }
-        });
-      },
-      startInstance: function (instance_id, account_id) {
-        let app = this;
-        const loading = this.$loading({
-          lock: true,
-          text: '执行中，请稍后',
-          spinner: 'el-icon-loading',
-          background: 'rgba(0, 0, 0, 0.7)'
-        });
-        $.ajax({
-          url: this.$base_url + '/public_cloud/start_instance/',
-          type: 'post',
-          dataType: 'json',
-          data: {user_token: app.user.user_token,firm_key: app.cur_firm.firm_key,instance_id:instance_id, account_id: account_id},
-          success: function (data) {
-            loading.close();
-            if (data.code == 0) {
-              app.$message({
-                type: 'success',
-                message: data.msg,
-                center: true
-              });
-              app.getHosts();
-            }else {
-              app.$message({
-                type: 'error',
-                message: data.msg,
-                center: true
-              })
-            }
-          }
-        });
+        app.snapshotsData = app.allSnapshotData.slice((curPage-1)*app.perPage,curPage*app.perPage);
       }
-    },
-    components: {}
+    }
   }
 </script>
 

@@ -206,7 +206,7 @@ class BillInfo(models.Model):
 
 class DiskInfo(models.Model):
     account_id = models.IntegerField(verbose_name='账户ID')
-    disk_id = models.IntegerField(verbose_name='磁盘id', null=True)
+    disk_id = models.CharField(verbose_name='磁盘id', max_length=100, null=True)
     policy_id = models.IntegerField(verbose_name='策略id', null=True)
     region_id = models.IntegerField(verbose_name='地区id', null=True)
     # disk_type:   0:系统盘    1:数据盘
@@ -223,7 +223,10 @@ class DiskInfo(models.Model):
         (1, '高效云盘'),
         (2, 'SSD云盘'),
         (3, '本地SSD'),
-        (4, '本地磁盘')
+        (4, '本地磁盘'),
+        (5, 'I/O密集型本地盘'),
+        (6, '吞吐密集型本地盘'),
+        (7, 'ESSD云盘'),
     )
     disk_category = models.IntegerField(verbose_name='磁盘类型', choices=disk_category_choices, default=0)
     encrypted = models.BooleanField(verbose_name='是否加密', default=False)

@@ -56,17 +56,17 @@ menu.backup_manager = {
 
 let backup_manager = menu.backup_manager.children;
 
-backup_manager.whole = {
-  name: '概览',
-  path: '/whole',
+// backup_manager.whole = {
+//   name: '概览',
+//   path: '/whole',
+// };
+backup_manager. resume = {
+  name: '磁盘列表',
+  path: '/disk_list',
 };
 backup_manager.backup = {
-  name: '备份',
-  path: '/backup',
-};
-backup_manager. resume = {
-  name: '恢复',
-  path: '/resume',
+  name: '快照列表',
+  path: '/snapshot_list',
 };
 backup_manager.policy = {
   name: '策略',

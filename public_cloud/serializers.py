@@ -51,15 +51,36 @@ class FirmSerializer(serializers.ModelSerializer):
     """
     云厂商序列化器
     """
+
     class Meta:
-       model = models.FirmInfo
-       fields = "__all__"
+        model = models.FirmInfo
+        fields = "__all__"
 
 
 class HostInfoSerializer(serializers.ModelSerializer):
     """
-    云厂商序列化器
+    云主机序列化器
     """
+    instance_type = serializers.SerializerMethodField()
+    instance_status = serializers.SerializerMethodField()
+    end_time = serializers.SerializerMethodField()
+    instance_type_id = serializers.SerializerMethodField(method_name=None)
+    instance_status_id = serializers.SerializerMethodField(method_name=None)
     class Meta:
         model = models.HostInfo
         fields = "__all__"
+
+    def get_instance_type(self, obj):
+        return obj.get_instance_type_display()
+
+    def get_instance_status(self, obj):
+        return obj.get_instance_status_display()
+
+    def get_end_time(self, obj):
+        return obj.end_time.strftime('%Y-%m-%d')
+
+    def get_instance_type_id(self, obj):
+        return obj.instance_type
+
+    def get_instance_status_id(self, obj):
+        return obj.instance_status

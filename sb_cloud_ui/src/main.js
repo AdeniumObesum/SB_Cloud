@@ -12,9 +12,11 @@ import $ from 'jquery'
 import Config from './config/'
 import Api from './api/'
 import Function from './utils/'
+import echarts from 'echarts'
 // import hookAjax from 'ajax-hook'
 
 Vue.use(ElementUI);
+Vue.prototype.$echarts = echarts
 Vue.prototype.$Api = Api;
 Vue.prototype.$Config = Config;
 Vue.prototype.$Func = Function;

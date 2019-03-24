@@ -234,6 +234,7 @@
         };
         app.$Func.setSessionData('cur_family', cur_family);
         app.currentFamily = cur_family;
+        window.location.reload();
       },
       toAddFamily: function () {
         let app = this;

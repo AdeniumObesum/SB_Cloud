@@ -23,4 +23,8 @@ urlpatterns = [
     path('import_host/', views.ImportHost.as_view()),
     path('get_family_firms/', views.GetFamilyFirm.as_view()),
     path('get_hosts/', views.GetHost.as_view()),
+    path('stop_instance/', views.StopInstance.as_view()),
+    path('start_instance/', views.StartInstance.as_view()),
+    path('get_disks/', views.GetDisk.as_view()),
+    path('get_snapshots/', views.GetSnapshot.as_view()),
 ]
