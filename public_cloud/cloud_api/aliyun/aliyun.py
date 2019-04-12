@@ -25,8 +25,8 @@ __pet__ = '''
 import datetime
 import json
 import re
-import uuid
 import time
+import uuid
 from collections import ChainMap
 
 import requests
@@ -90,8 +90,6 @@ class AliyunOperator(object):
                     'PageSize': '20'
                 }
                 config['PageNumber'] = str(int(resp['PageNumber']) + 1)
-                print(params)
-                print('进入递归')
                 response_pages = self.request_2_aliyun(base_url=base_url, config=config, params=params,
                                                        response_pages=response_pages)
         print(params)

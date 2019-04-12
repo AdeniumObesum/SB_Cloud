@@ -95,12 +95,6 @@ class RegisterView(APIView):
         password = request.data.get('password', '')
         phone = request.data.get('phone', '')
         email = request.data.get('email', '')
-        # data = {
-        #     'username': username,
-        #     'password': password,
-        #     'phone': phone,
-        #     'email': email
-        # }
         if username and password and phone and email:
             try:
                 has = User.objects.get(email=email)
