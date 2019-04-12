@@ -227,3 +227,47 @@ class GetSnapshot(APIView):
 
         response['data']['obj'] = data
         return Response(response, status=status.HTTP_200_OK)
+
+
+class DeleteSnapshot(APIView):
+    """
+    删除快照信息
+    """
+    authentication_classes = [auth.MyAuthentication]
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(DeleteSnapshot, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        pass
+        # response = ResponseData.ResponseData().response_data()
+        # firm_key = request.data.get('firm_key', '')
+        # # instance_id = request.data.get('instance_id', '')
+        # # account_id = request.data.get('account_id', '')
+        # family_id = request.data.get('family_id', '')
+        #
+        # accounts = models.AccountInfo.objects.filter(firm_key=firm_key, family_id=family_id, is_delete=0)
+        # data = []
+        # for account in accounts:
+        #     disks = models.DiskInfo.objects.filter(account_id=account.id)
+        #     for disk in disks:
+        #         instance = models.HostInfo.objects.get(id=disk.instance_id)
+        #         snapshots = models.SnapshotInfo.objects.filter(disk_id=disk.id, is_delete=0).order_by(
+        #             'snapshot_create_time')
+        #         for snapshot in snapshots:
+        #             dic = {}
+        #             dic['instance_type_id'] = instance.instance_type
+        #             dic['instance_name'] = instance.instance_name
+        #             dic['pub_ip'] = instance.instance_pub_ip
+        #             dic['pri_ip'] = instance.instance_pri_ip
+        #             dic['disk_id'] = disk.id
+        #             dic['region_id'] = disk.region_id
+        #             dic['disk_name'] = disk.disk_name
+        #             dic['snapshot_name'] = snapshot.snapshot_name
+        #             dic['source_disk_size'] = snapshot.source_disk_size
+        #             dic['snapshot_create_time'] = snapshot.snapshot_create_time.strftime('%Y-%m-%d')
+        #
+        #             data.append(dic)
+        #
+        # response['data']['obj'] = data
+        # return Response(response, status=status.HTTP_200_OK)

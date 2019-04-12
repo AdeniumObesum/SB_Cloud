@@ -467,7 +467,7 @@ class AliyunOperator(object):
                 }
             )
 
-    def api_stop_instance(self, instance_id, force_stop='false'):
+    def api_stop_instance(self, instance_id, force_stop=False):
         """开机"""
         base_url = 'https://ecs.aliyuncs.com'
         params = {
@@ -525,6 +525,83 @@ class AliyunOperator(object):
             data['msg'] = resp[0]['Message']
         return data
         pass
+
+    def api_delete_snapshot(self, force=False, snapshot_id=None):
+        '''
+        删除快照
+        :return:
+        '''
+        base_url = 'https://ecs.aliyuncs.com'
+        data = {
+            'code': 0,
+            'msg': ''
+        }
+        if snapshot_id:
+            params = {
+                'Action': 'DeleteSnapshot',
+                'SnapshotId': snapshot_id,
+                'Force': force
+            }
+            config = {
+                'Format': 'JSON',
+                'Version': '2014-05-26',
+                'AccessKeyId': self.access_key,
+                'SignatureMethod': 'HMAC-SHA1',
+                'Timestamp': self.get_utc(),
+                'SignatureVersion': '1.0',
+                'SignatureNonce': str(uuid.uuid4()),
+                'PageSize': '20'
+            }
+
+            resp = self.request_2_aliyun(base_url=base_url, response_pages=[], config=config, params=params)
+            if (len(resp[0]) == 1):
+                data['msg'] = '执行成功'
+                models.SnapshotInfo.objects.filter(is_delete=0, account_id=self.account.id,
+                                                   snapshot_id=snapshot_id).update(is_delete=0)
+            else:
+                data['code'] = 1
+                data['msg'] = resp[0]['Message']
+            return data
+            pass
+
+    def api_create_snapshot(self, snapshot_name=None, disk_id=None, description=None):
+        """
+        创建快照
+        :param snapshot_name:
+        :return:
+        """
+        base_url = 'https://ecs.aliyuncs.com'
+        data = {
+            'code': 0,
+            'msg': '',
+            'data': {}
+        }
+        params = {
+            'Action': 'CreateSnapshot',
+            'DiskId': disk_id,
+            'SnapshotName': snapshot_name,
+            'Description': description
+        }
+        config = {
+            'Format': 'JSON',
+            'Version': '2014-05-26',
+            'AccessKeyId': self.access_key,
+            'SignatureMethod': 'HMAC-SHA1',
+            'Timestamp': self.get_utc(),
+            'SignatureVersion': '1.0',
+            'SignatureNonce': str(uuid.uuid4()),
+            'PageSize': '20'
+        }
+
+        resp = self.request_2_aliyun(base_url=base_url, response_pages=[], config=config, params=params)
+        if "SnapshotId" in resp[0]:
+            data['msg'] = '执行成功'
+            data['data']['snapshot_id'] = resp[0]['SnapshotId']
+        else:
+            data['code'] = 1
+            data['msg'] = resp[0]['Message']
+        return data
+
 
 # if __name__ == '__main__':
 #     x = 'LTAIDICTHyLR9jsq'
