@@ -27,6 +27,8 @@ class ImportHost(APIView):
         account = models.AccountInfo.objects.get(id=account_id)
         try:
             CloudDic[firm_key](access_key=account.access_key, secret_key=account.secret_key).api_get_ecs_to_model()
+            account.is_import = 1
+            account.save()
             response['msg'] = '已导入，请到资源管理页面查看主机'
         except Exception as e:
             traceback.print_exc()
@@ -79,7 +81,7 @@ class GetHost(APIView):
         accounts = models.AccountInfo.objects.filter(family_id=family_id, firm_key=firm_key, is_delete=0)
         data = []
         for account in accounts:
-            hosts = models.HostInfo.objects.filter(account_id=account.id, is_delete=0)
+            hosts = models.HostInfo.objects.filter(account_id=account.id, is_delete=0, is_import=1)
             serializer = serializers.HostInfoSerializer(hosts, many=True)
             data += serializer.data
         response['data']['obj'] = data
@@ -239,35 +241,27 @@ class DeleteSnapshot(APIView):
         return super(DeleteSnapshot, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        pass
-        # response = ResponseData.ResponseData().response_data()
-        # firm_key = request.data.get('firm_key', '')
-        # # instance_id = request.data.get('instance_id', '')
-        # # account_id = request.data.get('account_id', '')
-        # family_id = request.data.get('family_id', '')
-        #
-        # accounts = models.AccountInfo.objects.filter(firm_key=firm_key, family_id=family_id, is_delete=0)
-        # data = []
-        # for account in accounts:
-        #     disks = models.DiskInfo.objects.filter(account_id=account.id)
-        #     for disk in disks:
-        #         instance = models.HostInfo.objects.get(id=disk.instance_id)
-        #         snapshots = models.SnapshotInfo.objects.filter(disk_id=disk.id, is_delete=0).order_by(
-        #             'snapshot_create_time')
-        #         for snapshot in snapshots:
-        #             dic = {}
-        #             dic['instance_type_id'] = instance.instance_type
-        #             dic['instance_name'] = instance.instance_name
-        #             dic['pub_ip'] = instance.instance_pub_ip
-        #             dic['pri_ip'] = instance.instance_pri_ip
-        #             dic['disk_id'] = disk.id
-        #             dic['region_id'] = disk.region_id
-        #             dic['disk_name'] = disk.disk_name
-        #             dic['snapshot_name'] = snapshot.snapshot_name
-        #             dic['source_disk_size'] = snapshot.source_disk_size
-        #             dic['snapshot_create_time'] = snapshot.snapshot_create_time.strftime('%Y-%m-%d')
-        #
-        #             data.append(dic)
-        #
-        # response['data']['obj'] = data
-        # return Response(response, status=status.HTTP_200_OK)
+
+        response = ResponseData.ResponseData().response_data()
+        firm_key = request.data.get('firm_key', '')
+        snapshot_id = request.data.get('snapshot_id', '') # String ID
+        account_id = request.data.get('account_id', '')
+        try:
+            account = models.AccountInfo.objects.filter(id=account_id, is_delete=0)
+            rest = CloudDic[firm_key](access_key=account.access_key, secret_key=account.secret_key).api_delete_snapshot(snapshot_id=snapshot_id)
+            if rest['code'] == 0:
+                models.SnapshotInfo.objects.filter(is_delete=0, account_id=account_id, snapshot_id=snapshot_id).update(is_delete=1)
+                response['msg'] = '已删除'
+            else:
+                response['code'] = 1
+                response['msg'] = '删除失败，权限不足'
+        except Exception as e:
+            response['code'] = 1
+            response['msg'] = '系统异常'
+        return Response(response, status=status.HTTP_200_OK)
+
+
+# 创建快照
+
+
+# 取消主机管理

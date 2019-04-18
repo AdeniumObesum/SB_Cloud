@@ -11,7 +11,7 @@
 from django.urls import path
 
 from public_cloud.account import views as account_views
-from public_cloud.resouce import views as resouce_views
+from public_cloud.resouce import views as resource_views
 
 urlpatterns = [
     # path('public_cloud/', include('public_cloud.urls')),
@@ -21,11 +21,12 @@ urlpatterns = [
     path('add_account/', account_views.AddAccount.as_view()),
     path('get_firms/', account_views.GetFirm.as_view()),
     path('get_account_detail/', account_views.GetAccountDetail.as_view()),
-    path('import_host/', resouce_views.ImportHost.as_view()),
-    path('get_family_firms/', resouce_views.GetFamilyFirm.as_view()),
-    path('get_hosts/', resouce_views.GetHost.as_view()),
-    path('stop_instance/', resouce_views.StopInstance.as_view()),
-    path('start_instance/', resouce_views.StartInstance.as_view()),
-    path('get_disks/', resouce_views.GetDisk.as_view()),
-    path('get_snapshots/', resouce_views.GetSnapshot.as_view()),
+    path('import_host/', resource_views.ImportHost.as_view()),
+    path('get_family_firms/', resource_views.GetFamilyFirm.as_view()),
+    path('get_hosts/', resource_views.GetHost.as_view()),
+    path('stop_instance/', resource_views.StopInstance.as_view()),
+    path('start_instance/', resource_views.StartInstance.as_view()),
+    path('get_disks/', resource_views.GetDisk.as_view()),
+    path('get_snapshots/', resource_views.GetSnapshot.as_view()),
+    path('delete_snapshot/', resource_views.DeleteSnapshot.as_view()),
 ]

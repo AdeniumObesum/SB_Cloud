@@ -195,15 +195,22 @@ class AliyunOperator(object):
         :return:
         """
         ecs_list = self.api_get_ecs()
-        db_all_info = models.HostInfo.objects.filter(account_id=self.account.id)
-        api_ecs_list = [i['InstanceId'] for i in ecs_list]
-
+        db_all_info = models.HostInfo.objects.filter(account_id=self.account.id, is_import=1)
+        not_imports = models.HostInfo.objects.filter(account_id=self.account.id, is_import=0)
+        not_imports_list = [i.instance_id for i in not_imports]
+        api_ecs_list = []
+        api_ecs_list_to_model = []
+        for i in ecs_list:
+            if (i['InstanceId'] not in not_imports_list):
+                api_ecs_list.append(i['InstanceId'])
+            else:
+                api_ecs_list_to_model.append(i)
         for info in db_all_info:
             if info.instance_id not in api_ecs_list:
                 info.is_delete = 1
                 info.save()
 
-        for ecs in ecs_list:
+        for ecs in api_ecs_list_to_model:
             if ecs['OSType'] == 'linux':
                 instance_type = 0
             elif ecs['OSType'] == 'windows':

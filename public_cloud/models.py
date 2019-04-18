@@ -56,6 +56,7 @@ class AccountInfo(models.Model):
     secret_key = models.CharField('secretKey', max_length=100, null=True)
     account_status = models.IntegerField(verbose_name='账户状态', default=0)
     app_id = models.CharField('appid', max_length=100, null=True)
+    is_import = models.IntegerField(verbose_name='是否已导入', default=0)
     create_at = models.DateTimeField('账户录入日期', auto_now_add=True)
     is_delete = models.IntegerField(verbose_name='是否删除', default=0)
 
@@ -152,7 +153,7 @@ class HostInfo(models.Model):
     )
     is_overdue = models.IntegerField(verbose_name='使用状态', choices=is_overdue_choices, default=0)
     is_delete = models.IntegerField(verbose_name='是否删除', default=0)
-
+    is_import = models.IntegerField(verbose_name='是否导入', default=1)
     class Meta:
         verbose_name = '主机资源信息'
         db_table = 'host_info'

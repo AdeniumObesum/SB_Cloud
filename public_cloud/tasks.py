@@ -54,4 +54,6 @@ def get_time():
 def update_host():
     all_account = models.AccountInfo.objects.filter(is_delete=0, account_status=0).all()
     for account in all_account:
-        CloudDic[account.firm_key](access_key=account.access_key, secret_key=account.secret_key).api_get_ecs_to_model()
+        if account.is_import:
+            CloudDic[account.firm_key](access_key=account.access_key,
+                                       secret_key=account.secret_key).api_get_ecs_to_model()
