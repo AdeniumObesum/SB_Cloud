@@ -252,6 +252,7 @@ class DiskInfo(models.Model):
     update_time = models.DateTimeField(verbose_name='更新时间', default=datetime.datetime.now)
     # 0. 未删除   1.已删除
     is_delete = models.IntegerField(verbose_name='是否删除', default=0)
+    is_cancel = models.IntegerField(verbose_name='对应主机是否撤销管理', default=0)
 
     class Meta:
         verbose_name = '磁盘表'
@@ -324,6 +325,7 @@ class SnapshotInfo(models.Model):
     create_time = models.DateTimeField(verbose_name='创建时间', default=datetime.datetime.now)
     snapshot_create_time = models.DateTimeField(verbose_name='快照创建时间', default=datetime.datetime.now)
     update_time = models.DateTimeField(verbose_name='更新时间', default=datetime.datetime.now)
+
 
     class Meta:
         verbose_name = '快照表'

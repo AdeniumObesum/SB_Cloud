@@ -6,7 +6,8 @@
           <img width="40" style="position: absolute;left: 10px;top: 10px;margin-right: 10px" src="./assets/imgs/云.svg"
                alt="">
         </span>
-        <span class="big">{{ siteName }}</span>
+        <!--<span class="big">{{ siteName }}</span>-->
+        <span class="big">云平台管理系统</span>
       </div>
       <span class="header-btn" @click="hiddenSidebar">
         <i class="el-icon-menu"></i>

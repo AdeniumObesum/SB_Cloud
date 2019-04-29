@@ -53,12 +53,12 @@
         <el-table-column
           fixed="right"
           label="操作"
-          width="100">
+          width="150">
           <template slot-scope="scope">
             <span>
-              <el-button @click="" type="error" style="transition: .4s;"  :ref="scope.row.id" size="mini">删除</el-button>
+              <el-button @click="deleteSnapshot(scope.row.snapshot_id,scope.row.account_id)" type="error" style="transition: .4s;"  :ref="scope.row.id" size="mini">删除</el-button>
             </span>
-            <span style="margin-top: 10px">
+            <span>
               <el-button @click="" type="warning" style="transition: .4s;"  :ref="scope.row.id" size="mini">回滚</el-button>
             </span>
 
@@ -159,6 +159,49 @@
       changePage: function (curPage) {
         let app = this;
         app.snapshotsData = app.allSnapshotData.slice((curPage-1)*app.perPage,curPage*app.perPage);
+      },
+      deleteSnapshot: function (snapshotId,accountId) {
+        let app = this;
+        app.$confirm('确认删除该快照吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(()=>{
+          const loading = this.$loading({
+            lock: true,
+            text: '执行中，请稍后',
+            spinner: 'el-icon-loading',
+            background: 'rgba(0, 0, 0, 0.7)'
+          });
+          $.ajax({
+            url: this.$base_url + '/public_cloud/delete_snapshot/',
+            type: 'post',
+            dataType: 'json',
+            data: {user_token: app.user.user_token,firm_key: app.cur_firm.firm_key,snapshot_id: snapshotId, account_id: accountId},
+            success: function (data) {
+              loading.close();
+              if (data.code == 0) {
+                app.$message({
+                  type: 'success',
+                  message: data.msg,
+                  center: true
+                });
+                app.getSnapshots();
+              }else {
+                app.$message({
+                  type: 'error',
+                  message: data.msg,
+                  center: true
+                })
+              }
+            }
+          });
+        }).catch(()=>{
+          app.$message({
+            type: 'info',
+            message: '已取消'
+          });
+        })
       }
     }
   }

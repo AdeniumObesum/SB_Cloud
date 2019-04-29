@@ -18,7 +18,7 @@ class CreateFamily(APIView):
         return super(CreateFamily, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData().response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data= {}).response_data()
         user_id = request.data.get('user_id', '')
         family_name = request.data.get('family_name', '')
         if user_id and family_name:
@@ -42,7 +42,7 @@ class GetFamily(APIView):
         return super(GetFamily, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData().response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data= {}).response_data()
         user_id = request.data.get('user_id', '')
         if user_id:
             families = models.Family.objects.filter(user_id=user_id, is_delete=0)
@@ -102,7 +102,7 @@ class GetAccount(APIView):
         return super(GetAccount, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData().response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data= {}).response_data()
         user_id = request.data.get('user_id', '')
 
         #
@@ -136,7 +136,7 @@ class GetAccountDetail(APIView):
         return super(GetAccountDetail, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData().response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data= {}).response_data()
         # user_id = request.data.get('user_id', '')
         # ali = aliyun.AliyunOperator(access_key='LTAIkLqvvsa0zXcZ', secret_key='TQ7LLCxyPwVEwSSvSKzO5PdN4j2lfZ')
         # ali.api_get_region_info_to_model()
@@ -174,7 +174,7 @@ class GetFirm(APIView):
         return super(GetFirm, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData().response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data= {}).response_data()
         firms = models.FirmInfo.objects.filter()
         serializer = serializers.FirmSerializer(firms, many=True)
         response['data']['obj'] = serializer.data

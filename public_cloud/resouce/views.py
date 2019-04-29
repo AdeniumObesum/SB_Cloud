@@ -1,5 +1,5 @@
 import traceback
-
+import time
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -21,7 +21,7 @@ class ImportHost(APIView):
         return super(ImportHost, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData().response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data= {}).response_data()
         account_id = request.data.get('account_id', '')
         firm_key = request.data.get('firm_key', '')
         account = models.AccountInfo.objects.get(id=account_id)
@@ -47,7 +47,7 @@ class GetFamilyFirm(APIView):
         return super(GetFamilyFirm, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData().response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
         family_id = request.data.get('family_id', '')
         dic = {}
         data = []
@@ -75,7 +75,7 @@ class GetHost(APIView):
         return super(GetHost, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData().response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
         family_id = request.data.get('family_id', '')
         firm_key = request.data.get('firm_key', '')
         accounts = models.AccountInfo.objects.filter(family_id=family_id, firm_key=firm_key, is_delete=0)
@@ -99,7 +99,7 @@ class StopInstance(APIView):
         return super(StopInstance, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData().response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
         firm_key = request.data.get('firm_key', '')
         instance_id = request.data.get('instance_id', '')
         account_id = request.data.get('account_id', '')
@@ -113,6 +113,7 @@ class StopInstance(APIView):
                 models.HostInfo.objects.filter(instance_id=instance_id).update(instance_status=3)  # #  其实有很多其他状态，暂时这么处理
         except Exception as e:
             traceback.print_exc()
+            response['code'] = 1
             response['msg'] = '关机异常'
         return Response(response, status=status.HTTP_200_OK)
 
@@ -127,7 +128,7 @@ class StartInstance(APIView):
         return super(StartInstance, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData().response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
         firm_key = request.data.get('firm_key', '')
         instance_id = request.data.get('instance_id', '')
         account_id = request.data.get('account_id', '')
@@ -141,6 +142,7 @@ class StartInstance(APIView):
                 models.HostInfo.objects.filter(instance_id=instance_id).update(instance_status=0)  # #  其实有很多其他状态，暂时这么处理
         except Exception as e:
             traceback.print_exc()
+            response['code'] = 0
             response['msg'] = '开机异常'
         return Response(response, status=status.HTTP_200_OK)
 
@@ -155,7 +157,7 @@ class GetDisk(APIView):
         return super(GetDisk, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData().response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
         firm_key = request.data.get('firm_key', '')
         # instance_id = request.data.get('instance_id', '')
         # account_id = request.data.get('account_id', '')
@@ -164,7 +166,7 @@ class GetDisk(APIView):
         accounts = models.AccountInfo.objects.filter(firm_key=firm_key, family_id=family_id, is_delete=0)
         data = []
         for account in accounts:
-            disks = models.DiskInfo.objects.filter(account_id=account.id)
+            disks = models.DiskInfo.objects.filter(account_id=account.id, is_cancel=0, is_delete=0)
             for disk in disks:
                 dic = {}
                 instance = models.HostInfo.objects.get(id=disk.instance_id)
@@ -181,6 +183,8 @@ class GetDisk(APIView):
                 dic['disk_size'] = disk.disk_size
                 dic['disk_type'] = disk.get_disk_type_display()
                 dic['snapshot_count'] = snapshots.count()
+                dic['disk_long_id'] = disk.disk_id
+                dic['account_id'] = disk.account_id
                 dic['last_create_time'] = snapshots[0].snapshot_create_time.strftime('%Y-%m-%d')
                 data.append(dic)
 
@@ -198,7 +202,7 @@ class GetSnapshot(APIView):
         return super(GetSnapshot, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData().response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
         firm_key = request.data.get('firm_key', '')
         # instance_id = request.data.get('instance_id', '')
         # account_id = request.data.get('account_id', '')
@@ -207,7 +211,7 @@ class GetSnapshot(APIView):
         accounts = models.AccountInfo.objects.filter(firm_key=firm_key, family_id=family_id, is_delete=0)
         data = []
         for account in accounts:
-            disks = models.DiskInfo.objects.filter(account_id=account.id)
+            disks = models.DiskInfo.objects.filter(account_id=account.id, is_cancel=0)
             for disk in disks:
                 instance = models.HostInfo.objects.get(id=disk.instance_id)
                 snapshots = models.SnapshotInfo.objects.filter(disk_id=disk.id, is_delete=0).order_by(
@@ -223,6 +227,8 @@ class GetSnapshot(APIView):
                     dic['disk_name'] = disk.disk_name
                     dic['snapshot_name'] = snapshot.snapshot_name
                     dic['source_disk_size'] = snapshot.source_disk_size
+                    dic['account_id'] = snapshot.account_id
+                    dic['snapshot_id'] = snapshot.snapshot_id
                     dic['snapshot_create_time'] = snapshot.snapshot_create_time.strftime('%Y-%m-%d')
 
                     data.append(dic)
@@ -242,12 +248,12 @@ class DeleteSnapshot(APIView):
 
     def post(self, request, *args, **kwargs):
 
-        response = ResponseData.ResponseData().response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
         firm_key = request.data.get('firm_key', '')
         snapshot_id = request.data.get('snapshot_id', '') # String ID
         account_id = request.data.get('account_id', '')
         try:
-            account = models.AccountInfo.objects.filter(id=account_id, is_delete=0)
+            account = models.AccountInfo.objects.filter(id=account_id, is_delete=0).first()
             rest = CloudDic[firm_key](access_key=account.access_key, secret_key=account.secret_key).api_delete_snapshot(snapshot_id=snapshot_id)
             if rest['code'] == 0:
                 models.SnapshotInfo.objects.filter(is_delete=0, account_id=account_id, snapshot_id=snapshot_id).update(is_delete=1)
@@ -256,12 +262,84 @@ class DeleteSnapshot(APIView):
                 response['code'] = 1
                 response['msg'] = '删除失败，权限不足'
         except Exception as e:
+            traceback.print_exc()
             response['code'] = 1
             response['msg'] = '系统异常'
         return Response(response, status=status.HTTP_200_OK)
 
 
-# 创建快照
+class CreateSnapshot(APIView):
+    """创建快照"""
+
+    authentication_classes = [auth.MyAuthentication]
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreateSnapshot, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
+        account_id = request.data.get('account_id', '')
+        firm_key = request.data.get('firm_key', '')
+        disk_id = request.data.get('disk_id', '')
+        name = request.data.get('name', '')
+        description = request.data.get('description', '')
+        account = models.AccountInfo.objects.get(id=account_id)
+        try:
+            if not name:
+                name = '云平台管理_' + str(time.time())
+            data = CloudDic[firm_key](access_key=account.access_key, secret_key=account.secret_key).api_create_snapshot(
+                snapshot_name=name,
+                disk_id=disk_id,
+                description=description
+            )
+            response['code'] = data['code']
+            response['msg'] = data['msg']
+        except Exception as e:
+            traceback.print_exc()
+            response['code'] = 1
+            response['msg'] = '系统异常'
+
+        return Response(response, status=status.HTTP_200_OK)
+
+# 回滚快照
+class RollbackSnapshot(APIView):
+    """回滚快照"""
+
+    authentication_classes = [auth.MyAuthentication]
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(RollbackSnapshot, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
+        account_id = request.data.get('account_id', '')
+        firm_key = request.data.get('firm_key', '')
+        disk_id = request.data.get('disk_id', '')
+        snapshot_id = request.data.get('snapshot_id', '')
+        return Response(response, status=status.HTTP_200_OK)
+
+class CancelInstance(APIView):
+    """
+    取消管理
+    """
+    authentication_classes = [auth.MyAuthentication]
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(CancelInstance, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        response = ResponseData.ResponseData(code=0, msg='success', data= {}).response_data()
+        instance_id = request.data.get('instance_id', '')
+        try:
+            instance = models.HostInfo.objects.filter(instance_id=instance_id)
+            instance.update(is_import=0)
+            models.DiskInfo.objects.filter(instance_id=instance[0].id).update(is_cancel=1)
+            response['code'] = 0
+            response['msg'] = '执行成功'
+        except Exception as e:
+            traceback.print_exc()
+            response['code'] = 1
+            response['msg'] = '撤销失败'
+        return Response(response, status=status.HTTP_200_OK)
 
 
-# 取消主机管理

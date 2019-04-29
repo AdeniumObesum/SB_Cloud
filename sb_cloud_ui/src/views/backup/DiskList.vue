@@ -58,7 +58,7 @@
           fixed="right"
           label="操作">
           <template slot-scope="scope">
-            <el-button @click="" type="primary" style="transition: .4s;"  :ref="scope.row.id" size="small">创建快照</el-button>
+            <el-button @click="createSnapshot(scope.row.disk_long_id,scope.row.account_id)" type="primary" style="transition: .4s;" size="small">创建快照</el-button>
             <!--<el-button @click="deleteUser(scope.row.id)" v-if="scope.row.active != '0'" type="danger" icon="el-icon-delete" circle size="small"></el-button>-->
             <!--<el-button @click="deleteUser(scope.row.id)" v-else icon="el-icon-check" circle size="small"></el-button>
              v-if="scope.row.status === 0"
@@ -139,6 +139,49 @@
           }
         });
       },
+      createSnapshot: function (diskId, accountId) {
+        let app = this;
+        app.$confirm('确认为磁盘'+ diskId + '创建快照吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(()=>{
+          const loading = this.$loading({
+            lock: true,
+            text: '执行中，请稍后',
+            spinner: 'el-icon-loading',
+            background: 'rgba(0, 0, 0, 0.7)'
+          });
+          $.ajax({
+            url: this.$base_url + '/public_cloud/create_snapshot/',
+            type: 'post',
+            dataType: 'json',
+            data: {user_token: app.user.user_token,firm_key: app.cur_firm.firm_key,disk_id: diskId, account_id: accountId},
+            success: function (data) {
+              loading.close();
+              if (data.code == 0) {
+                app.$message({
+                  type: 'success',
+                  message: data.msg,
+                  center: true
+                });
+                app.getSnapshots();
+              }else {
+                app.$message({
+                  type: 'error',
+                  message: data.msg,
+                  center: true
+                })
+              }
+            }
+          });
+        }).catch(()=>{
+          app.$message({
+            type: 'info',
+            message: '已取消'
+          });
+        })
+      }
 
     }
   }

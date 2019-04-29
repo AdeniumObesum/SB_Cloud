@@ -17,7 +17,7 @@
             <div style="margin-top: 13px">云账号数量： <span style="color: #999999">{{val.all_account_count}}</span></div>
             <div style="margin-top: 13px">创建时间： <span style="color: #999999">{{val.create_time}}</span></div>
             <div class="bottom" style="float: left">
-              <el-button type="text" class="button" @click="showImport(val.family_id)">导入云主机</el-button>
+              <el-button type="text" class="button" @click="showImport(val.family_id)">云帐号</el-button>
             </div>
             <div class="bottom clearfix">
               <el-button type="text" class="button" @click="addAccountForm(val.family_id)">导入账号</el-button>

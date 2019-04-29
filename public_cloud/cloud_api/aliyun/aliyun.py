@@ -92,7 +92,7 @@ class AliyunOperator(object):
                 config['PageNumber'] = str(int(resp['PageNumber']) + 1)
                 response_pages = self.request_2_aliyun(base_url=base_url, config=config, params=params,
                                                        response_pages=response_pages)
-        print(params)
+        # print(params)
         # print(response_pages)
         return response_pages
 
@@ -183,7 +183,7 @@ class AliyunOperator(object):
             }
             params['RegionId'] = region.region_id
             ecs_pages = self.request_2_aliyun(base_url=base_url, response_pages=[], config=config, params=params)
-            print(ecs_pages)
+            # print(ecs_pages)
             for one_page in ecs_pages:
                 # print(one_page)
                 response_list += one_page['Instances']['Instance']
@@ -203,13 +203,11 @@ class AliyunOperator(object):
         for i in ecs_list:
             if (i['InstanceId'] not in not_imports_list):
                 api_ecs_list.append(i['InstanceId'])
-            else:
                 api_ecs_list_to_model.append(i)
         for info in db_all_info:
             if info.instance_id not in api_ecs_list:
                 info.is_delete = 1
                 info.save()
-
         for ecs in api_ecs_list_to_model:
             if ecs['OSType'] == 'linux':
                 instance_type = 0
@@ -269,6 +267,7 @@ class AliyunOperator(object):
             self.api_get_instance_disks_to_model(instance_id=ecs['InstanceId'], region_id=ecs['RegionId'])
 
     def api_get_instance_disks(self, instance_id, region_id):
+        print('获取磁盘', instance_id)
         base_url = 'https://ecs.aliyuncs.com'
         params = {
             'Action': 'DescribeDisks'
@@ -475,12 +474,16 @@ class AliyunOperator(object):
             )
 
     def api_stop_instance(self, instance_id, force_stop=False):
-        """开机"""
+        """关机"""
         base_url = 'https://ecs.aliyuncs.com'
+        if force_stop:
+            force_str = 'true'
+        else:
+            force_str = 'false'
         params = {
             'Action': 'StopInstance',
             'InstanceId': instance_id,
-            'ForceStop': force_stop
+            'ForceStop': force_str
         }
         config = {
             'Format': 'JSON',
@@ -543,11 +546,15 @@ class AliyunOperator(object):
             'code': 0,
             'msg': ''
         }
+        if force:
+            force_str = 'true'
+        else:
+            force_str = 'false'
         if snapshot_id:
             params = {
                 'Action': 'DeleteSnapshot',
                 'SnapshotId': snapshot_id,
-                'Force': force
+                'Force': force_str
             }
             config = {
                 'Format': 'JSON',
@@ -609,6 +616,8 @@ class AliyunOperator(object):
             data['msg'] = resp[0]['Message']
         return data
 
+    def api_rollback_snapshot(self):
+        pass
 
 # if __name__ == '__main__':
 #     x = 'LTAIDICTHyLR9jsq'
