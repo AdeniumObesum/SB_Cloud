@@ -57,37 +57,34 @@
         app.loginLoading = true;
         $.ajax({
           url: app.base_url + '/login/',
-          // url: 'http://127.0.0.1:8000/login/',
           type: 'POST',
           dataType: 'json',
-          // withCredentials:{
-          //
-          // },
           contentType: 'application/x-www-form-urlencoded',
-          // contentType: 'application/json',
           data: {email: app.userEmail, password: app.password},
           success: function (data) {
             if (data.code == '0') {
               app.$Func.setSessionData('user', data.data.obj);
-              console.log(data.data.obj);
-              // app.$cookieStore.setCookie('user_token', data.data.obj.user_token);
-              // app.$cookieStore.setCookie('user_email', data.data.obj.user_email);
-              // app.$cookieStore.setCookie('is_super', data.data.obj.user_token);
-              // app.$cookieStore.setCookie('username', data.data.obj.username);
-              // app.$cookieStore.setCookie('user_id', data.data.obj.user_id);
-              // app.$route.meta.keepAlive = true;
-              // var tt = app.$cookieStore.getCookie('user_token');
               app.$router.push({
                 name: 'ChooseFamily'
               })
             }else {
-              // app.$route.meta.keepAlive = false;
+              app.$alert('登录失败，请检查用户名密码', '出错', {
+                confirmButtonText: '确定',
+                callback: action => {
+                  // app.$message({
+                  //   type: 'info',
+                  //   message: `action: ${ action }`
+                  // });
+                }
+              });
             }
           },
           error: function (XMLHttpRequest, textStatus, errorThrown) {
-            console.log(XMLHttpRequest.readyState);
-            console.log(textStatus);
-            console.log(errorThrown);
+            app.$alert('未知错误，请检查网络', '出错', {
+              confirmButtonText: '确定',
+              callback: action => {
+              }
+            });
           }
         });
         app.loginLoading = false;

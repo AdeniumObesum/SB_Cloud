@@ -40,7 +40,7 @@
       <el-button
         type="primary" :loading="loginLoading"
         style="width: 100%;margin-bottom: 18px"
-        @click.native="login"
+        @click.native="register"
       >提交
       </el-button>
       <div>
@@ -67,7 +67,7 @@
       }
     },
     methods: {
-      login() {
+      register() {
         let app = this;
         app.loginLoading = true;
         $.ajax({
@@ -75,35 +75,51 @@
           // url: 'http://127.0.0.1:8000/login/',
           type: 'POST',
           dataType: 'json',
-          // withCredentials:{
-          //
-          // },
           contentType: 'application/x-www-form-urlencoded',
-          // contentType: 'application/json',
           data: {email: app.userEmail, password: app.password, phone: app.phoneNum, username: app.username},
           success: function (data) {
 
             if (data.code == '0') {
               // 弹窗提示
+              app.$message({
+                message: '注册成功',
+                type: 'success'
+              });
 
-
-              // 3秒后去登录
+              // 1秒后去登录
               setTimeout(function () {
-
+                app.$router.push({
+                  name: 'Login'
+                })
               },2000);
               app.$router.push({
                 name: 'Login',
                 params: {}
               });
-
-
-              app.$route.meta.keepAlive = true;
             } else {
               // 提示失败
+              app.$alert(data.msg, '注册失败', {
+                confirmButtonText: '确定',
+                callback: action => {
+                  // app.$message({
+                  //   type: 'info',
+                  //   message: `action: ${ action }`
+                  // });
+                }
+              });
             }
           },
           error: function (XMLHttpRequest, textStatus, errorThrown) {
             //提示失败
+            app.$alert('未知错误，请检查网络', '出错', {
+              confirmButtonText: '确定',
+              callback: action => {
+                // app.$message({
+                //   type: 'info',
+                //   message: `action: ${ action }`
+                // });
+              }
+            });
           }
         });
         app.loginLoading = false;
