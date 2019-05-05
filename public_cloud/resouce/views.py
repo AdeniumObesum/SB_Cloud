@@ -1,5 +1,7 @@
-import traceback
 import time
+import traceback
+
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -21,7 +23,7 @@ class ImportHost(APIView):
         return super(ImportHost, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData(code=0, msg='success', data= {}).response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
         account_id = request.data.get('account_id', '')
         firm_key = request.data.get('firm_key', '')
         account = models.AccountInfo.objects.get(id=account_id)
@@ -78,10 +80,26 @@ class GetHost(APIView):
         response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
         family_id = request.data.get('family_id', '')
         firm_key = request.data.get('firm_key', '')
+        keyword = request.data.get('keyword', '')
+
+        # 模糊查询条件
+        q = Q()
+        q.connector = 'OR'
+        q.children.append(('instance_name__icontains', keyword))
+        q.children.append(('os_name__icontains', keyword))
+        q.children.append(('instance_pub_ip__contains', keyword))
+        q.children.append(('instance_pri_ip__contains', keyword))
+        if keyword == 'windows' or keyword == 'Windows':
+            keyword = 1
+            q.children.append(('instance_type', keyword))
+        elif keyword == 'linux' or keyword == 'Linux':
+            keyword = 0
+            q.children.append(('instance_type', keyword))
+
         accounts = models.AccountInfo.objects.filter(family_id=family_id, firm_key=firm_key, is_delete=0)
         data = []
         for account in accounts:
-            hosts = models.HostInfo.objects.filter(account_id=account.id, is_delete=0, is_import=1)
+            hosts = models.HostInfo.objects.filter(account_id=account.id, is_delete=0, is_import=1).filter(q)
             serializer = serializers.HostInfoSerializer(hosts, many=True)
             data += serializer.data
         response['data']['obj'] = data
@@ -250,13 +268,15 @@ class DeleteSnapshot(APIView):
 
         response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
         firm_key = request.data.get('firm_key', '')
-        snapshot_id = request.data.get('snapshot_id', '') # String ID
+        snapshot_id = request.data.get('snapshot_id', '')  # String ID
         account_id = request.data.get('account_id', '')
         try:
             account = models.AccountInfo.objects.filter(id=account_id, is_delete=0).first()
-            rest = CloudDic[firm_key](access_key=account.access_key, secret_key=account.secret_key).api_delete_snapshot(snapshot_id=snapshot_id)
+            rest = CloudDic[firm_key](access_key=account.access_key, secret_key=account.secret_key).api_delete_snapshot(
+                snapshot_id=snapshot_id)
             if rest['code'] == 0:
-                models.SnapshotInfo.objects.filter(is_delete=0, account_id=account_id, snapshot_id=snapshot_id).update(is_delete=1)
+                models.SnapshotInfo.objects.filter(is_delete=0, account_id=account_id, snapshot_id=snapshot_id).update(
+                    is_delete=1)
                 response['msg'] = '已删除'
             else:
                 response['code'] = 1
@@ -301,6 +321,7 @@ class CreateSnapshot(APIView):
 
         return Response(response, status=status.HTTP_200_OK)
 
+
 # 回滚快照
 class RollbackSnapshot(APIView):
     """回滚快照"""
@@ -316,7 +337,22 @@ class RollbackSnapshot(APIView):
         firm_key = request.data.get('firm_key', '')
         disk_id = request.data.get('disk_id', '')
         snapshot_id = request.data.get('snapshot_id', '')
+        try:
+            account = models.AccountInfo.objects.get(id=account_id)
+            data = CloudDic[firm_key](access_key=account.access_key,
+                                      secret_key=account.secret_key).api_rollback_snapshot(
+                disk_id=disk_id,
+                snapshot_id=snapshot_id
+            )
+            response['code'] = data['code']
+            response['msg'] = data['msg']
+
+        except Exception as e:
+            traceback.print_exc()
+            response['code'] = 1
+            response['msg'] = '系统异常'
         return Response(response, status=status.HTTP_200_OK)
+
 
 class CancelInstance(APIView):
     """
@@ -328,7 +364,7 @@ class CancelInstance(APIView):
         return super(CancelInstance, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData(code=0, msg='success', data= {}).response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
         instance_id = request.data.get('instance_id', '')
         try:
             instance = models.HostInfo.objects.filter(instance_id=instance_id)
@@ -341,5 +377,3 @@ class CancelInstance(APIView):
             response['code'] = 1
             response['msg'] = '撤销失败'
         return Response(response, status=status.HTTP_200_OK)
-
-

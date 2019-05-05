@@ -30,5 +30,6 @@ urlpatterns = [
     path('get_snapshots/', resource_views.GetSnapshot.as_view()),
     path('delete_snapshot/', resource_views.DeleteSnapshot.as_view()),
     path('create_snapshot/', resource_views.CreateSnapshot.as_view()),
+    path('rollback_snapshot/', resource_views.RollbackSnapshot.as_view()),
     path('cancel_host/', resource_views.CancelInstance.as_view()),
 ]

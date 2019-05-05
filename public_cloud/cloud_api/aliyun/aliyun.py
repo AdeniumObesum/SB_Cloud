@@ -25,7 +25,6 @@ __pet__ = '''
 import datetime
 import json
 import re
-import time
 import uuid
 from collections import ChainMap
 
@@ -616,7 +615,54 @@ class AliyunOperator(object):
             data['msg'] = resp[0]['Message']
         return data
 
-    def api_rollback_snapshot(self):
+    def api_rollback_snapshot(self, disk_id, snapshot_id):
+        """
+        恢复快照
+        :return:
+        """
+        base_url = 'https://ecs.aliyuncs.com'
+        action = 'ResetDisk'
+        data = {
+            'code': 0,
+            'msg': '',
+            'data': {}
+        }
+        params = {
+            'Action': action,
+            'DiskId': disk_id,
+            'SnapshotId': snapshot_id,
+        }
+        config = {
+            'Format': 'JSON',
+            'Version': '2014-05-26',
+            'AccessKeyId': self.access_key,
+            'SignatureMethod': 'HMAC-SHA1',
+            'Timestamp': self.get_utc(),
+            'SignatureVersion': '1.0',
+            'SignatureNonce': str(uuid.uuid4()),
+            'PageSize': '20'
+        }
+
+        disk = models.DiskInfo.objects.filter(id=disk_id, is_delete=0)
+        instance = models.HostInfo.objects.filter(id=disk[0].instance_id, is_delete=0)
+        if disk[0].disk_status == 0:  # 磁盘使用中
+            if instance[0].instance_status == 1:  # 实例已停止
+                try:
+                    resp = self.request_2_aliyun(base_url=base_url, response_pages=[], config=config, params=params)
+                    if resp[0].status_code == 200:
+                        if len(resp[0].content) == 1:  # 一个requestId
+                            data['msg'] = '快照恢复中'
+                        else:
+                            data['msg'] = '快照恢复失败'
+                    else:
+                        data['msg'] = 'api调用失败', resp.content
+                except Exception as e:
+                    data['msg'] = 'something error: %s' % e
+            else:
+                data['msg'] = '实例未停止，无法恢复快照'
+        else:
+            data['msg'] = '磁盘不是“使用中”状态，无法恢复快照'
+        return data
         pass
 
 # if __name__ == '__main__':

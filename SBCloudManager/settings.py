@@ -81,9 +81,9 @@ WSGI_APPLICATION = 'SBCloudManager.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'sb_cloud',
+        'NAME': 'sbcloud',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': '123456',
         'HOST': '127.0.0.1',
         'PORT': '3306',
     }

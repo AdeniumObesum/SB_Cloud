@@ -13,6 +13,11 @@
               </template>
             </el-dropdown-menu>
           </el-dropdown>
+          <div style="display: inline-block;float: right;margin-top: -5px">
+            <el-input size="mini" placeholder="关键字查询" v-model="searchKeyword">
+              <el-button slot="append" icon="el-icon-search" @click="getHosts()"></el-button>
+            </el-input>
+          </div>
         </el-row>
       </el-header>
       <el-table
@@ -95,6 +100,7 @@
     name: "HostList",
     data() {
       return {
+        searchKeyword: '',
         firm_id: '',
         params: {
           name: '',
@@ -149,7 +155,7 @@
           url: this.$base_url + '/public_cloud/get_hosts/',
           type: 'post',
           dataType: 'json',
-          data: {user_token: app.user.user_token, family_id: app.cur_family.id,firm_key: app.cur_firm.firm_key},
+          data: {user_token: app.user.user_token, family_id: app.cur_family.id,firm_key: app.cur_firm.firm_key, keyword: app.searchKeyword},
           success: function (data) {
             if (data.code == 0) {
               app.hostsData = data.data.obj;
@@ -286,7 +292,7 @@
           });
         });
 
-      }
+      },
     },
     components: {}
   }
