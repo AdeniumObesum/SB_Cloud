@@ -27,6 +27,7 @@ class ImportHost(APIView):
         account_id = request.data.get('account_id', '')
         firm_key = request.data.get('firm_key', '')
         account = models.AccountInfo.objects.get(id=account_id)
+        # CloudDic[firm_key](access_key=account.access_key, secret_key=account.secret_key).api_get_region_info_to_model()
         try:
             CloudDic[firm_key](access_key=account.access_key, secret_key=account.secret_key).api_get_ecs_to_model()
             account.is_import = 1
@@ -280,7 +281,7 @@ class DeleteSnapshot(APIView):
                 response['msg'] = '已删除'
             else:
                 response['code'] = 1
-                response['msg'] = '删除失败，权限不足'
+                response['msg'] = rest['msg']
         except Exception as e:
             traceback.print_exc()
             response['code'] = 1

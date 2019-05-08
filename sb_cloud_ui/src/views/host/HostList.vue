@@ -9,7 +9,9 @@
             </span>
             <el-dropdown-menu slot="dropdown">
               <template v-for="item in firms">
-                <el-dropdown-item @click="chooseThisFirm(item.firm_key, item.firm_name)">{{item.firm_name}}</el-dropdown-item>
+                <div @click="chooseThisFirm(item.firm_key, item.firm_name)">
+                  <el-dropdown-item>{{item.firm_name}}</el-dropdown-item>
+                </div>
               </template>
             </el-dropdown-menu>
           </el-dropdown>
@@ -145,6 +147,7 @@
       },
       chooseThisFirm: function (firm_key, firm_name) {
         let app = this;
+        console.log(firm_name);
         app.cur_firm.firm_key = firm_key;
         app.cur_firm.firm_name = firm_name;
         app.getHosts();

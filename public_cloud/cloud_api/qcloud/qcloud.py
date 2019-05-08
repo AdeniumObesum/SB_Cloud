@@ -24,14 +24,16 @@ __pet__ = '''
 
 import datetime
 import json
+import random
 import re
-import uuid
+import time
 from collections import ChainMap
+from math import ceil
 
 import requests
 
 from public_cloud import models
-from public_cloud.cloud_api.aliyun import aliyun_util
+from public_cloud.cloud_api.qcloud import qcloud_util
 
 
 # 先初始化云厂商
@@ -49,50 +51,44 @@ class QcloudOperator(object):
     def __init__(self, **kwargs):
         self.access_key = kwargs['access_key']
         self.secret_key = kwargs['secret_key']
-        self.firm = models.FirmInfo.objects.filter(firm_key=100)[0]
+        self.firm = models.FirmInfo.objects.filter(firm_key=101)[0]
         try:
-            self.account = models.AccountInfo.objects.filter(firm_key=100, access_key=self.access_key)[0]
+            self.account = models.AccountInfo.objects.filter(firm_key=101, access_key=self.access_key)[0]
         except Exception as e:
             self.account = None
         pass
 
-    def get_date_time(self, string):  ###获取datetime
+    def get_date_time(self, string):  # ## 获取datetime
         get_time = re.findall('(\d+\-\d+\-\d+)|(\d+\:\d+)', string)
         format_time = get_time[0][0] + ' ' + get_time[1][1]
         return datetime.datetime.strptime(format_time, '%Y-%m-%d %H:%M')
 
-    def request_2_qcloud(self, base_url, response_pages=[], config={}, params={}):  # 返回所有请求页
 
-        # if response_pages:
-        #     real_response_pages = response_pages
-        # else:
-        #     real_response_pages = []
-
+    def request_2_qcloud(self, base_url, end_point, config={}, params={}):  # 返回所有请求页
+        response_pages = []
         all_params = ChainMap(config, params)
-        all_params = aliyun_util.get_signature(all_params=all_params, secret_key=self.secret_key)
-        resp = requests.get(url=base_url, params=all_params)
+        all_params = qcloud_util.get_signature(all_params=all_params, end_point=end_point, secret_key=self.secret_key)
+        resp = requests.get(url=base_url, params=all_params, headers={'Connection':'close'})
         resp = json.loads(resp.content)
-        # time.sleep(0.5)
-        response_pages.append(resp)
+        response_pages.append(resp['Response'])
         # print(all_params)
         # print(resp)
-        if 'PageSize' in resp:
-            if int(resp['TotalCount']) / int(resp['PageSize']) > int(resp['PageNumber']):
-                config = {
-                    'Format': 'JSON',
-                    'Version': '2014-05-26',
-                    'AccessKeyId': self.access_key,
-                    'SignatureMethod': 'HMAC-SHA1',
-                    'Timestamp': self.get_utc(),
-                    'SignatureVersion': '1.0',
-                    'SignatureNonce': str(uuid.uuid4()),
-                    'PageSize': '20'
-                }
-                config['PageNumber'] = str(int(resp['PageNumber']) + 1)
-                response_pages = self.request_2_qcloud(base_url=base_url, config=config, params=params,
-                                                       response_pages=response_pages)
-        # print(params)
-        # print(response_pages)
+        offset = 0
+        limit = 20
+        if 'TotalCount' in resp['Response']:
+            if int(resp['Response']['TotalCount']) > 20:
+                pages = ceil(int(resp['Response']['TotalCount']) / 20)
+                for page in range(2, pages):
+                    # 每页一次请求，这里不用递归
+                    offset += 20
+                    config['Offset'] = offset
+                    config['Limit'] = limit
+                    all_params = ChainMap(config, params)
+                    all_params = qcloud_util.get_signature(all_params=all_params, end_point=end_point,
+                                                           secret_key=self.secret_key)
+                    resp = requests.get(url=base_url, params=all_params)
+                    resp = json.loads(resp.content)
+                    response_pages.append(resp['Response'])
         return response_pages
 
     def get_utc(self):
@@ -100,7 +96,7 @@ class QcloudOperator(object):
         utc_time = datetime.datetime.strftime(UTCC, "%Y-%m-%dT%H:%M:%SZ")
         return utc_time
 
-    def api_get_region_info(self, endpoint='ecs.aliyuncs.com'):
+    def api_get_region_info(self, endpoint='cvm.tencentcloudapi.com'):
         """
         获取地区信息
         :return:
@@ -108,22 +104,20 @@ class QcloudOperator(object):
         base_url = 'https://' + endpoint
         action = 'DescribeRegions'
         config = {
-            'Format': 'JSON',
-            'Version': '2014-05-26',
-            'AccessKeyId': self.access_key,
-            'SignatureMethod': 'HMAC-SHA1',
-            'Timestamp': self.get_utc(),
-            'SignatureVersion': '1.0',
-            'SignatureNonce': str(uuid.uuid4()),
-            'PageSize': '20'
+            'Action': action,
+            'SecretId': self.access_key,
+            'Timestamp': int(time.time()),
+            'Nonce': random.randint(0, 1000000),
+            'SignatureMethod': 'HmacSHA1',
+            'Version': '2017-03-12'
         }
         params = {
-            'Action': action,
+
         }
         response_list = []
-        regions_pages = self.request_2_qcloud(base_url=base_url, config=config, params=params)
+        regions_pages = self.request_2_qcloud(base_url=base_url, end_point=endpoint, config=config, params=params)
         for one_page in regions_pages:
-            response_list += one_page['Regions']['Region']
+            response_list += one_page['RegionSet']
         return response_list
         # RegionId: cn-qingdao
         # RegionEndpoint: ecs.aliyuncs.com
@@ -136,7 +130,7 @@ class QcloudOperator(object):
         '''
         regions = self.api_get_region_info()
         db_all_info = models.RegionInfo.objects.filter(firm_key=self.firm.firm_key, region_type=0, is_delete=0)
-        api_region_list = [i['RegionId'] for i in regions]
+        api_region_list = [i['Region'] for i in regions]
 
         for info in db_all_info:
             if info.region_id not in api_region_list:
@@ -145,15 +139,13 @@ class QcloudOperator(object):
 
         for region in regions:
             models.RegionInfo.objects.update_or_create(
-                region_id=region['RegionId'],
+                region_id=region['Region'],
                 firm_key=self.firm.firm_key,
                 is_delete=0,
                 defaults={
-                    # 'firm_key': self.firm.firm_key,
-                    # 'region_id': region['RegionId'],
                     'region_type': 0,
-                    'region_name': region['LocalName'],
-                    'end_point': region['RegionEndpoint']
+                    'region_name': region['RegionName'],
+                    'end_point': ''
                 }
             )
 
@@ -165,27 +157,30 @@ class QcloudOperator(object):
         regions = models.RegionInfo.objects.filter(firm_key=self.firm.firm_key, is_delete=0)
         params = {
             'Action': 'DescribeInstances',
+
         }
 
-        base_url = 'https://ecs.aliyuncs.com'
+        base_url = 'https://cvm.tencentcloudapi.com'
         response_list = []
         for region in regions:
             config = {
-                'Format': 'JSON',
-                'Version': '2014-05-26',
-                'AccessKeyId': self.access_key,
-                'SignatureMethod': 'HMAC-SHA1',
-                'Timestamp': self.get_utc(),
-                'SignatureVersion': '1.0',
-                'SignatureNonce': str(uuid.uuid4()),
-                'PageSize': '20'
+                'SecretId': self.access_key,
+                'Timestamp': int(time.time()),
+                'Nonce': random.randint(0, 1000000),
+                'SignatureMethod': 'HmacSHA1',
+                'Version': '2017-03-12',
+                'Offset': 0,
+                'Limit': 20
             }
-            params['RegionId'] = region.region_id
-            ecs_pages = self.request_2_qcloud(base_url=base_url, response_pages=[], config=config, params=params)
+            params['Region'] = region.region_id
+            ecs_pages = self.request_2_qcloud(base_url=base_url, end_point='cvm.tencentcloudapi.com', config=config,
+                                              params=params)
             # print(ecs_pages)
             for one_page in ecs_pages:
                 # print(one_page)
-                response_list += one_page['Instances']['Instance']
+                for index in range(0, len(one_page['InstanceSet'])):
+                    one_page['InstanceSet'][index]['RegionId'] = region.region_id
+                response_list += one_page['InstanceSet']
         return response_list
 
     def api_get_ecs_to_model(self):
@@ -194,6 +189,7 @@ class QcloudOperator(object):
         :return:
         """
         ecs_list = self.api_get_ecs()
+        print(ecs_list)
         db_all_info = models.HostInfo.objects.filter(account_id=self.account.id, is_import=1)
         not_imports = models.HostInfo.objects.filter(account_id=self.account.id, is_import=0)
         not_imports_list = [i.instance_id for i in not_imports]
@@ -208,57 +204,53 @@ class QcloudOperator(object):
                 info.is_delete = 1
                 info.save()
         for ecs in api_ecs_list_to_model:
-            if ecs['OSType'] == 'linux':
+            if 'CentOS' in ecs['OsName']:
                 instance_type = 0
-            elif ecs['OSType'] == 'windows':
+            elif 'Window' in ecs['OsName']:
                 instance_type = 1
 
-            if ecs['Status'] == 'Running':
+            if ecs['InstanceState'] == 'RUNNING':
                 instance_status = 0
-            elif ecs['Status'] == 'Starting':
+            elif ecs['Status'] == 'STARTING':
                 instance_status = 1
-            elif ecs['Status'] == 'Stopping':
+            elif ecs['Status'] == 'STOPPING':
                 instance_status = 2
-            elif ecs['Status'] == 'Stopped':
+            elif ecs['Status'] == 'STOPPED':
                 instance_status = 3
 
-            if ecs['InternetChargeType'] == 'PayByTraffic':
+            if ecs['InternetAccessible']['InternetChargeType'] == 'TRAFFIC_POSTPAID_BY_HOUR' == 'BANDWIDTH_PACKAGE':
                 internet_charge_type = 0
-            elif ecs['InternetChargeType'] == 'PayByBandwidth':
+            elif ecs['InternetAccessible']['InternetChargeType'] == 'BANDWIDTH_PREPAID' or ecs['InternetAccessible'][
+                'InternetChargeType'] or ecs['InternetAccessible'][
+                'InternetChargeType'] == 'BANDWIDTH_POSTPAID_BY_HOUR':
                 internet_charge_type = 1
 
-            if ecs['InstanceChargeType'] == 'PrePaid':
+            if ecs['InstanceChargeType'] == 'PREPAID':
                 instance_charge_type = 0
-            elif ecs['InstanceChargeType'] == 'PostPaid':
+            elif ecs['InstanceChargeType'] == 'POSTPAID_BY_HOUR':
                 instance_charge_type = 1
 
-            if len(ecs['OperationLocks']['LockReason']) > 0:
-                is_overdue = 2
-            else:
-                is_overdue = 0
+            # #### 到这了
+
             region = models.RegionInfo.objects.get(region_id=ecs['RegionId'], is_delete=0, firm_key=self.firm.firm_key)
             models.HostInfo.objects.update_or_create(
                 account_id=self.account.id,
                 instance_id=ecs['InstanceId'],
                 defaults={
-                    # 'account_id': self.account.id,
-                    # 'instance_id': ecs['InstanceId'],
-                    'instance_name': ecs['HostName'],
-                    'os_name': ecs['OSName'],
+                    'instance_name': ecs['InstanceName'],
+                    'os_name': ecs['OsName'],
                     'instance_type': instance_type,
                     'instance_status': instance_status,
-                    'instance_pub_ip': ecs['PublicIpAddress']['IpAddress'][0],
-                    'instance_pri_ip': ecs['InnerIpAddress']['IpAddress'][0] if ecs['InnerIpAddress']['IpAddress'] else
-                    ecs['VpcAttributes']['PrivateIpAddress']['IpAddress'][0],
-                    'instance_vpc_ip': ecs['VpcAttributes']['PrivateIpAddress']['IpAddress'][0] if
-                    ecs['VpcAttributes']['PrivateIpAddress']['IpAddress'] else '',
-                    'network_interface_id': ecs['NetworkInterfaces']['NetworkInterface'][0]['NetworkInterfaceId'],
+                    'instance_pub_ip': ecs['PublicIpAddresses'][0],
+                    'instance_pri_ip': ecs['PrivateIpAddresses'][0],
+                    'instance_vpc_ip': '',
+                    'network_interface_id': ecs['VirtualPrivateCloud']['SubnetId'],
                     'internet_charge_type': internet_charge_type,
                     'instance_charge_type': instance_charge_type,
-                    'price_per_hour': ecs['SpotPriceLimit'],
+                    'price_per_hour': 0,
                     'region_id': region.id,
-                    'is_overdue': is_overdue,
-                    'start_time': self.get_date_time(ecs['CreationTime']),
+                    'is_overdue': 0,
+                    'start_time': self.get_date_time(ecs['CreatedTime']),
                     'end_time': self.get_date_time(ecs['ExpiredTime']),
                     'is_delete': 0,
                 }
@@ -267,47 +259,51 @@ class QcloudOperator(object):
 
     def api_get_instance_disks(self, instance_id, region_id):
         print('获取磁盘', instance_id)
-        base_url = 'https://ecs.aliyuncs.com'
+        end_point = 'cbs.tencentcloudapi.com'
+        base_url = 'https://cbs.tencentcloudapi.com'
         params = {
-            'Action': 'DescribeDisks'
+            'Action': 'DescribeDisks',
         }
         response_list = []
         if instance_id and region_id:
             config = {
-                'Format': 'JSON',
-                'Version': '2014-05-26',
-                'AccessKeyId': self.access_key,
-                'SignatureMethod': 'HMAC-SHA1',
-                'Timestamp': self.get_utc(),
-                'SignatureVersion': '1.0',
-                'SignatureNonce': str(uuid.uuid4()),
-                'PageSize': '20'
+                'SecretId': self.access_key,
+                'Timestamp': int(time.time()),
+                'Nonce': random.randint(0, 1000000),
+                'SignatureMethod': 'HmacSHA1',
+                'Version': '2017-03-12',
+                'Offset': 0,
+                'Limit': 20
             }
-            params['InstanceId'] = instance_id
-            params['RegionId'] = region_id
-            disks_pages = self.request_2_qcloud(base_url=base_url, response_pages=[], config=config, params=params)
+            params['Filters.0.Name'] = 'instance-id'
+            params['Filters.0.Values.0'] = instance_id
+            params['Region'] = region_id
+            disks_pages = self.request_2_qcloud(base_url=base_url, end_point=end_point, config=config, params=params)
             # print(params)
+            print(disks_pages)
             for one_page in disks_pages:
                 # print(one_page)
-                response_list += one_page['Disks']['Disk']
+                for index in range(0, len(one_page['DiskSet'])):
+                    one_page['DiskSet'][index]['RegionId'] = region_id
+                response_list += one_page['DiskSet']
         else:
-            regions = models.RegionInfo.objects.filter(firm_key=self.firm.firm_key)
+            regions = models.RegionInfo.objects.filter(firm_key=self.firm.firm_key, is_delete=0)
             for region in regions:
                 config = {
-                    'Format': 'JSON',
-                    'Version': '2014-05-26',
-                    'AccessKeyId': self.access_key,
-                    'SignatureMethod': 'HMAC-SHA1',
-                    'Timestamp': self.get_utc(),
-                    'SignatureVersion': '1.0',
-                    'SignatureNonce': str(uuid.uuid4()),
-                    'PageSize': '20'
+                    'SecretId': self.access_key,
+                    'Timestamp': int(time.time()),
+                    'Nonce': random.randint(0, 1000000),
+                    'SignatureMethod': 'HmacSHA1',
+                    'Version': '2017-03-12',
+                    'Offset': 0,
+                    'Limit': 20
                 }
-                params['RegionId'] = region.region_id
-                disks_pages = self.request_2_qcloud(base_url=base_url, config=config, params=params)
+                params['Region'] = region.region_id
+                disks_pages = self.request_2_qcloud(base_url=base_url, end_point=end_point, config=config,
+                                                    params=params)
                 for one_page in disks_pages:
-                    # print(one_page)
-                    response_list += one_page['Disks']['Disk']
+                    response_list += one_page['DiskSet']
+                    print(one_page)
         # print('================',response_list)
         return response_list
 
@@ -315,9 +311,10 @@ class QcloudOperator(object):
         disks = self.api_get_instance_disks(instance_id=instance_id, region_id=region_id)
         instance = models.HostInfo.objects.filter(instance_id=instance_id)
         if instance:
-            db_all_info = models.DiskInfo.objects.filter(account_id=self.account.id, instance_id=instance[0].id)
+            db_all_info = models.DiskInfo.objects.filter(account_id=self.account.id, instance_id=instance[0].id,
+                                                         is_delete=0)
         else:
-            db_all_info = models.DiskInfo.objects.filter(account_id=self.account.id)
+            db_all_info = models.DiskInfo.objects.filter(account_id=self.account.id, is_delete=0)
         api_disk_list = [i['DiskId'] for i in disks]
         for info in db_all_info:
             if info.disk_id not in api_disk_list:
@@ -326,47 +323,35 @@ class QcloudOperator(object):
 
         for disk in disks:
 
-            if disk['Type'] == 'data':
+            if disk['DiskUsage'] == 'DATA_DISK':
                 disk_type = 1
-            elif disk['Type'] == 'system':
+            elif disk['DiskUsage'] == 'SYSTEM_DISK':
                 disk_type = 0
 
-            if disk['Category'] == 'cloud':
+            if disk['DiskType'] == 'CLOUD_BASIC':
                 disk_category = 0
-            elif disk['Category'] == 'cloud_efficiency':
+            elif disk['DiskType'] == 'CLOUD_PREMIUM':
                 disk_category = 1
-            elif disk['Category'] == 'cloud_ssd':
+            elif disk['DiskType'] == 'CLOUD_SSD':
                 disk_category = 2
-            elif disk['Category'] == 'ephemeral_ssd':
-                disk_category = 3
-            elif disk['Category'] == 'ephemeral':
-                disk_category = 4
-            elif disk['Category'] == 'local_ssd_pro':
-                disk_category = 5
-            elif disk['Category'] == 'local_hdd_pro':
-                disk_category = 6
-            elif disk['Category'] == 'cloud_essd':
-                disk_category = 7
 
-            if disk['Status'] == 'In_use':
+            if disk['DiskState'] == 'ATTACHED':
                 disk_status = 0
-            elif disk['Status'] == 'Available':
+            elif disk['DiskState'] == 'UNATTACHED':
                 disk_status = 1
-            elif disk['Status'] == 'Attaching':
+            elif disk['DiskState'] == 'ATTACHING':
                 disk_status = 2
-            elif disk['Status'] == 'Detaching':
+            elif disk['DiskState'] == 'DETACHING':
                 disk_status = 3
-            elif disk['Status'] == 'Creating':
-                disk_status = 4
-            elif disk['Status'] == 'Relniting':
+            else:
                 disk_status = 5
 
-            if disk['DiskChargeType'] == 'PrePaid':
+            if disk['DiskChargeType'] == 'PREPAID':
                 disk_charge_type = 0
-            elif disk['DiskChargeType'] == 'PostPaid':
+            elif disk['DiskChargeType'] == 'POSTPAID_BY_HOUR':
                 disk_charge_type = 1
 
-            region = models.RegionInfo.objects.get(region_id=disk['RegionId'], is_delete=0, firm_key=self.firm.firm_key)
+            region = models.RegionInfo.objects.get(region_id=region_id, is_delete=0, firm_key=self.firm.firm_key)
             instance = models.HostInfo.objects.get(is_delete=0, instance_id=disk['InstanceId'],
                                                    account_id=self.account.id)
 
@@ -380,8 +365,8 @@ class QcloudOperator(object):
                     'instance_id': instance.id,
                     'disk_name': disk['DiskName'],
                     'disk_category': disk_category,
-                    'encrypted': disk['Encrypted'],
-                    'disk_size': disk['Size'],
+                    'encrypted': disk['Encrypt'],
+                    'disk_size': disk['DiskSize'],
                     'disk_status': disk_status,
                     'disk_charge_type': disk_charge_type,
                     'is_delete': 0
@@ -393,35 +378,36 @@ class QcloudOperator(object):
             #  ## 存
 
     def api_get_snapshots(self, disk_id=None, region_id=None):
-        base_url = 'https://ecs.aliyuncs.com'
+        base_url = 'https://cbs.tencentcloudapi.com'
+        end_point = 'cbs.tencentcloudapi.com'
         params = {
             'Action': 'DescribeSnapshots'
         }
         config = {
-            'Format': 'JSON',
-            'Version': '2014-05-26',
-            'AccessKeyId': self.access_key,
-            'SignatureMethod': 'HMAC-SHA1',
-            'Timestamp': self.get_utc(),
-            'SignatureVersion': '1.0',
-            'SignatureNonce': str(uuid.uuid4()),
-            'PageSize': '20'
+            'SecretId': self.access_key,
+            'Timestamp': int(time.time()),
+            'Nonce': random.randint(0, 1000000),
+            'SignatureMethod': 'HmacSHA1',
+            'Version': '2017-03-12',
+            'Offset': 0,
+            'Limit': 20
         }
         response_list = []
         if disk_id and region_id:
-            params['RegionId'] = region_id
-            params['DiskId'] = disk_id
-            snapshot_pages = self.request_2_qcloud(base_url=base_url, response_pages=[], config=config, params=params)
+            params['Region'] = region_id
+            params['Filters.0.Name'] = 'disk-id'
+            params['Filters.0.Values.0'] = disk_id
+            snapshot_pages = self.request_2_qcloud(base_url=base_url, end_point=end_point, config=config, params=params)
             # print(snapshot_pages)
             for one_page in snapshot_pages:
                 print(one_page)
                 # print(one_page['Snapshots']['Snapshot'])
-                response_list += one_page['Snapshots']['Snapshot']
+                response_list += one_page['SnapshotSet']
         else:
-            snapshot_pages = self.request_2_qcloud(base_url=base_url, response_pages=[], config=config, params=params)
+            snapshot_pages = self.request_2_qcloud(base_url=base_url, end_point=end_point, config=config, params=params)
             for one_page in snapshot_pages:
                 # print(one_page)
-                response_list += one_page['Snapshots']['Snapshot']
+                response_list += one_page['SnapshotSet']
         return response_list
 
     def api_get_snapshots_to_model(self, disk_id=None, region_id=None, instance_id=None):
@@ -441,17 +427,24 @@ class QcloudOperator(object):
             instance = models.HostInfo.objects.get(is_delete=0, instance_id=instance_id,
                                                    account_id=self.account.id)
 
-            if snapshot['Status'] == 'accomplished':
+            if snapshot['Percent'] == 100:
                 available_status = 0
             else:
                 available_status = 1
 
-            if snapshot['Status'] == 'accomplished':
+            if snapshot['SnapshotState'] == 'NORMAL':
                 snapshot_status = 0
-            elif snapshot['Status'] == 'progressing':
+            elif snapshot['SnapshotState'] == 'CREATING' or snapshot['SnapshotState'] == 'ROLLBACKING':
                 snapshot_status = 1
             else:
                 snapshot_status = 2
+
+            create_time = self.get_date_time(snapshot['CreateTime'])
+            if not snapshot['IsPermanent']:
+                dead_time = self.get_date_time(snapshot['DeadlineTime'])
+                days = (dead_time - create_time).days
+            else:
+                days = 9999
 
             models.SnapshotInfo.objects.update_or_create(
                 account_id=self.account.id,
@@ -462,76 +455,78 @@ class QcloudOperator(object):
                     'available_status': available_status,
                     'disk_id': disk.id,
                     'snapshot_name': snapshot['SnapshotName'],
-                    'snapshot_progress': snapshot['Progress'],
-                    'retention_days': snapshot['RetentionDays'] if 'RetentionDays' in snapshot else 0,
+                    'snapshot_progress': snapshot['Percent'],
+                    'retention_days': days,
                     'snapshot_status': snapshot_status,
-                    'source_disk_size': snapshot['SourceDiskSize'],
+                    'source_disk_size': snapshot['DiskSize'],
                     # 'create_time': self.get_date_time(snapshot['CreationTime']),
-                    'snapshot_create_time': self.get_date_time(snapshot['CreationTime']),
+                    'snapshot_create_time': create_time,
                     'is_delete': 0,
                 }
             )
 
     def api_stop_instance(self, instance_id, force_stop=False):
         """关机"""
-        base_url = 'https://ecs.aliyuncs.com'
+        base_url = 'https://cvm.tencentcloudapi.com'
+        end_point = 'cvm.tencentcloudapi.com'
+        instance = models.HostInfo.objects.get(instance_id=instance_id, is_delete=0)
+        region = models.RegionInfo.objects.get(firm_key=self.firm.firm_key, id=instance.region_id)
         if force_stop:
-            force_str = 'true'
+            force_str = 'TRUE'
         else:
-            force_str = 'false'
+            force_str = 'FALSE'
         params = {
-            'Action': 'StopInstance',
-            'InstanceId': instance_id,
+            'Action': 'StopInstances',
+            'InstanceIds.0': instance_id,
+            'Region': region.region_id,
             'ForceStop': force_str
         }
         config = {
-            'Format': 'JSON',
-            'Version': '2014-05-26',
-            'AccessKeyId': self.access_key,
-            'SignatureMethod': 'HMAC-SHA1',
-            'Timestamp': self.get_utc(),
-            'SignatureVersion': '1.0',
-            'SignatureNonce': str(uuid.uuid4()),
-            'PageSize': '20'
+            'SecretId': self.access_key,
+            'Timestamp': int(time.time()),
+            'Nonce': random.randint(0, 1000000),
+            'SignatureMethod': 'HmacSHA1',
+            'Version': '2017-03-12',
         }
         data = {
             'code': 0,
             'msg': ''
         }
-        resp = self.request_2_qcloud(base_url=base_url, response_pages=[], config=config, params=params)
+        resp = self.request_2_qcloud(base_url=base_url, end_point=end_point, config=config, params=params)
         if (len(resp[0]) == 1):
             data['msg'] = '已关机'
         else:
             data['code'] = 1
-            data['msg'] = resp[0]['Message']
+            data['msg'] = resp[0]['Error']['Message']
         return data
 
     def api_start_instance(self, instance_id):
-        base_url = 'https://ecs.aliyuncs.com'
+        base_url = 'https://cvm.tencentcloudapi.com'
+        end_point = 'cvm.tencentcloudapi.com'
+        instance = models.HostInfo.objects.get(instance_id=instance_id, is_delete=0)
+        region = models.RegionInfo.objects.get(firm_key=self.firm.firm_key, id=instance.region_id)
         params = {
-            'Action': 'StartInstance',
-            'InstanceId': instance_id,
+            'Action': 'StartInstances',
+            'InstanceIds.0': instance_id,
+            'Region': region.region_id
         }
         config = {
-            'Format': 'JSON',
-            'Version': '2014-05-26',
-            'AccessKeyId': self.access_key,
-            'SignatureMethod': 'HMAC-SHA1',
-            'Timestamp': self.get_utc(),
-            'SignatureVersion': '1.0',
-            'SignatureNonce': str(uuid.uuid4()),
-            'PageSize': '20'
+            'SecretId': self.access_key,
+            'Timestamp': int(time.time()),
+            'Nonce': random.randint(0, 1000000),
+            'SignatureMethod': 'HmacSHA1',
+            'Version': '2017-03-12',
         }
         data = {
             'code': 0,
             'msg': ''
         }
-        resp = self.request_2_qcloud(base_url=base_url, response_pages=[], config=config, params=params)
+        resp = self.request_2_qcloud(base_url=base_url, end_point=end_point, config=config, params=params)
         if (len(resp[0]) == 1):
             data['msg'] = '已开机'
         else:
             data['code'] = 1
-            data['msg'] = resp[0]['Message']
+            data['msg'] = resp[0]['Error']['Message']
         return data
         pass
 
@@ -540,42 +535,40 @@ class QcloudOperator(object):
         删除快照
         :return:
         '''
-        base_url = 'https://ecs.aliyuncs.com'
+        base_url = 'https://cbs.tencentcloudapi.com'
+        end_point = 'cbs.tencentcloudapi.com'
+        snapshot = models.SnapshotInfo.objects.get(snapshot_id=snapshot_id, is_delete=0)
+        region = models.RegionInfo.objects.get(firm_key=self.firm.firm_key, id=snapshot.region_id)
         data = {
             'code': 0,
             'msg': ''
         }
-        if force:
-            force_str = 'true'
-        else:
-            force_str = 'false'
+
         if snapshot_id:
             params = {
-                'Action': 'DeleteSnapshot',
-                'SnapshotId': snapshot_id,
-                'Force': force_str
+                'Action': 'DeleteSnapshots',
+                'SnapshotIds.0': snapshot_id,
+                'Region': region.region_id
+                # 'Force': force_str
             }
             config = {
-                'Format': 'JSON',
-                'Version': '2014-05-26',
-                'AccessKeyId': self.access_key,
-                'SignatureMethod': 'HMAC-SHA1',
-                'Timestamp': self.get_utc(),
-                'SignatureVersion': '1.0',
-                'SignatureNonce': str(uuid.uuid4()),
-                'PageSize': '20'
+                'SecretId': self.access_key,
+                'Timestamp': int(time.time()),
+                'Nonce': random.randint(0, 1000000),
+                'SignatureMethod': 'HmacSHA1',
+                'Version': '2017-03-12',
             }
 
-            resp = self.request_2_qcloud(base_url=base_url, response_pages=[], config=config, params=params)
-            if (len(resp[0]) == 1):
+            resp = self.request_2_qcloud(base_url=base_url, end_point=end_point, config=config, params=params)
+            print(resp)
+            if 'flowId' in resp[0]:
                 data['msg'] = '执行成功'
                 models.SnapshotInfo.objects.filter(is_delete=0, account_id=self.account.id,
                                                    snapshot_id=snapshot_id).update(is_delete=0)
             else:
                 data['code'] = 1
-                data['msg'] = resp[0]['Message']
+                data['msg'] = resp[0]['Error']['Message']
             return data
-            pass
 
     def api_create_snapshot(self, snapshot_name=None, disk_id=None, description=None):
         """
@@ -583,7 +576,10 @@ class QcloudOperator(object):
         :param snapshot_name:
         :return:
         """
-        base_url = 'https://ecs.aliyuncs.com'
+        base_url = 'https://cbs.tencentcloudapi.com'
+        end_point = 'cbs.tencentcloudapi.com'
+        disk = models.DiskInfo.objects.get(disk_id=disk_id, is_delete=0)
+        region = models.RegionInfo.objects.get(firm_key=self.firm.firm_key, id=disk.region_id)
         data = {
             'code': 0,
             'msg': '',
@@ -591,28 +587,30 @@ class QcloudOperator(object):
         }
         params = {
             'Action': 'CreateSnapshot',
+            'Region': region.region_id,
             'DiskId': disk_id,
-            'SnapshotName': snapshot_name,
-            'Description': description
+            'SnapshotName': snapshot_name
+            # 'Description': description
         }
         config = {
-            'Format': 'JSON',
-            'Version': '2014-05-26',
-            'AccessKeyId': self.access_key,
-            'SignatureMethod': 'HMAC-SHA1',
-            'Timestamp': self.get_utc(),
-            'SignatureVersion': '1.0',
-            'SignatureNonce': str(uuid.uuid4()),
-            'PageSize': '20'
+            'SecretId': self.access_key,
+            'Timestamp': int(time.time()),
+            'Nonce': random.randint(0, 1000000),
+            'SignatureMethod': 'HmacSHA1',
+            'Version': '2017-03-12',
         }
 
-        resp = self.request_2_qcloud(base_url=base_url, response_pages=[], config=config, params=params)
+        resp = self.request_2_qcloud(base_url=base_url, end_point=end_point, config=config, params=params)
         if "SnapshotId" in resp[0]:
             data['msg'] = '执行成功'
             data['data']['snapshot_id'] = resp[0]['SnapshotId']
+            instance = models.HostInfo.objects.get(id=disk.instance_id)
+            time.sleep(10)
+            self.api_get_snapshots_to_model(disk_id=disk_id, region_id=region.region_id, instance_id=instance.instance_id)
         else:
             data['code'] = 1
-            data['msg'] = resp[0]['Message']
+            data['msg'] = resp[0]['Error']['Message']
+
         return data
 
     def api_rollback_snapshot(self, disk_id, snapshot_id):
@@ -620,8 +618,11 @@ class QcloudOperator(object):
         恢复快照
         :return:
         """
-        base_url = 'https://ecs.aliyuncs.com'
-        action = 'ResetDisk'
+        base_url = 'https://cbs.tencentcloudapi.com'
+        end_point = 'cbs.tencentcloudapi.com'
+        action = 'ApplySnapshot'
+        disk = models.DiskInfo.objects.get(id=disk_id, is_delete=0)
+        region = models.RegionInfo.objects.get(firm_key=self.firm.firm_key, id=disk.region_id)
         data = {
             'code': 0,
             'msg': '',
@@ -629,38 +630,38 @@ class QcloudOperator(object):
         }
         params = {
             'Action': action,
-            'DiskId': disk_id,
+            'DiskId': disk.disk_id,
             'SnapshotId': snapshot_id,
+            'Region': region.region_id
         }
         config = {
-            'Format': 'JSON',
-            'Version': '2014-05-26',
-            'AccessKeyId': self.access_key,
-            'SignatureMethod': 'HMAC-SHA1',
-            'Timestamp': self.get_utc(),
-            'SignatureVersion': '1.0',
-            'SignatureNonce': str(uuid.uuid4()),
-            'PageSize': '20'
+            'SecretId': self.access_key,
+            'Timestamp': int(time.time()),
+            'Nonce': random.randint(0, 1000000),
+            'SignatureMethod': 'HmacSHA1',
+            'Version': '2017-03-12',
         }
 
-        disk = models.DiskInfo.objects.filter(id=disk_id, is_delete=0)
-        instance = models.HostInfo.objects.filter(id=disk[0].instance_id, is_delete=0)
-        if disk[0].disk_status == 0:  # 磁盘使用中
-            if instance[0].instance_status == 1:  # 实例已停止
+        instance = models.HostInfo.objects.filter(id=disk.instance_id, is_delete=0)
+        if disk.disk_status == 0:  # 磁盘使用中
+            if instance[0].instance_status == 3:  # 实例已停止
                 try:
-                    resp = self.request_2_qcloud(base_url=base_url, response_pages=[], config=config, params=params)
-                    if resp[0].status_code == 200:
-                        if len(resp[0].content) == 1:  # 一个requestId
-                            data['msg'] = '快照恢复中'
-                        else:
-                            data['msg'] = '快照恢复失败'
+                    resp = self.request_2_qcloud(base_url=base_url, end_point=end_point, config=config, params=params)
+                    print(resp)
+                    if len(resp[0]) == 1:  # 一个requestId
+                        data['msg'] = '快照恢复中'
                     else:
-                        data['msg'] = 'api调用失败', resp.content
+                        data['code'] = 1
+                        data['msg'] = resp[0]['Error']['Message']
+
                 except Exception as e:
+                    data['code'] = 1
                     data['msg'] = 'something error: %s' % e
             else:
+                data['code'] = 1
                 data['msg'] = '实例未停止，无法恢复快照'
         else:
+            data['code'] = 1
             data['msg'] = '磁盘不是“使用中”状态，无法恢复快照'
         return data
         pass

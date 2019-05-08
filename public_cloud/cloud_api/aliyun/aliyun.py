@@ -70,7 +70,7 @@ class AliyunOperator(object):
 
         all_params = ChainMap(config, params)
         all_params = aliyun_util.get_signature(all_params=all_params, secret_key=self.secret_key)
-        resp = requests.get(url=base_url, params=all_params)
+        resp = requests.get(url=base_url, params=all_params, headers={'Connection':'close'})
         resp = json.loads(resp.content)
         # time.sleep(0.5)
         response_pages.append(resp)
@@ -545,15 +545,15 @@ class AliyunOperator(object):
             'code': 0,
             'msg': ''
         }
-        if force:
-            force_str = 'true'
-        else:
-            force_str = 'false'
+        # if force:
+        #     force_str = 'true'
+        # else:
+        #     force_str = 'false'
         if snapshot_id:
             params = {
                 'Action': 'DeleteSnapshot',
                 'SnapshotId': snapshot_id,
-                'Force': force_str
+                # 'Force': force_str
             }
             config = {
                 'Format': 'JSON',
@@ -605,11 +605,15 @@ class AliyunOperator(object):
             'SignatureNonce': str(uuid.uuid4()),
             'PageSize': '20'
         }
-
+        disk = models.DiskInfo.objects.get(disk_id=disk_id, is_delete=0)
+        region = models.RegionInfo.objects.get(firm_key=self.firm.firm_key, id=disk.region_id)
         resp = self.request_2_aliyun(base_url=base_url, response_pages=[], config=config, params=params)
         if "SnapshotId" in resp[0]:
             data['msg'] = '执行成功'
             data['data']['snapshot_id'] = resp[0]['SnapshotId']
+            instance = models.HostInfo.objects.get(id=disk.instance_id)
+            time.sleep(10)
+            self.api_get_snapshots_to_model(disk_id=disk_id, region_id=region.region_id, instance_id=instance.instance_id)
         else:
             data['code'] = 1
             data['msg'] = resp[0]['Message']
@@ -627,9 +631,10 @@ class AliyunOperator(object):
             'msg': '',
             'data': {}
         }
+        disk = models.DiskInfo.objects.get(id=disk_id, is_delete=0)
         params = {
             'Action': action,
-            'DiskId': disk_id,
+            'DiskId': disk.disk_id,
             'SnapshotId': snapshot_id,
         }
         config = {
@@ -646,21 +651,24 @@ class AliyunOperator(object):
         disk = models.DiskInfo.objects.filter(id=disk_id, is_delete=0)
         instance = models.HostInfo.objects.filter(id=disk[0].instance_id, is_delete=0)
         if disk[0].disk_status == 0:  # 磁盘使用中
-            if instance[0].instance_status == 1:  # 实例已停止
+            if instance[0].instance_status == 3:  # 实例已停止
                 try:
                     resp = self.request_2_aliyun(base_url=base_url, response_pages=[], config=config, params=params)
-                    if resp[0].status_code == 200:
-                        if len(resp[0].content) == 1:  # 一个requestId
-                            data['msg'] = '快照恢复中'
-                        else:
-                            data['msg'] = '快照恢复失败'
+
+                    if len(resp[0]) == 1:  # 一个requestId
+                        data['msg'] = '快照恢复中'
                     else:
-                        data['msg'] = 'api调用失败', resp.content
+                        data['code'] = 1
+                        data['msg'] = '快照恢复失败'
+
                 except Exception as e:
+                    data['code'] = 1
                     data['msg'] = 'something error: %s' % e
             else:
+                data['code'] = 1
                 data['msg'] = '实例未停止，无法恢复快照'
         else:
+            data['code'] = 1
             data['msg'] = '磁盘不是“使用中”状态，无法恢复快照'
         return data
         pass

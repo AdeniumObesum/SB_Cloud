@@ -9,7 +9,9 @@
             </span>
             <el-dropdown-menu slot="dropdown">
               <template v-for="item in firms">
-                <el-dropdown-item @click="chooseThisFirm(item.firm_key, item.firm_name)">{{item.firm_name}}</el-dropdown-item>
+                <div @click="chooseThisFirm(item.firm_key, item.firm_name)">
+                  <el-dropdown-item>{{item.firm_name}}</el-dropdown-item>
+                </div>
               </template>
             </el-dropdown-menu>
           </el-dropdown>
