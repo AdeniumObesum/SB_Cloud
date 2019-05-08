@@ -27,7 +27,7 @@
         ref="table"
         style="width: 100%">
         <el-table-column
-        width="60">
+          width="60">
           <div slot-scope="scope">
             <div class="linux" style="width: 32px;height: 32px" v-if="scope.row.instance_type_id == 0"></div>
             <div class="windows" style="width: 32px;height: 32px" v-else></div>
@@ -36,11 +36,90 @@
         <el-table-column
           prop="instance_name"
           label="实例名称">
+          <div slot-scope="scope">
+            <el-popover
+              placement="right"
+              width="400"
+              trigger="click">
+              <div class="detail">
+                <el-row :gutter="0">
+                  <el-col :span="12" class="label">
+                    <label for="">实例名称：</label>
+                  </el-col>
+                  <el-col :span="12" class="content">
+                    <span>{{scope.row.instance_name}}</span>
+                  </el-col>
+                </el-row>
+                <el-row :gutter="0">
+                  <el-col :span="12" class="label">
+                    <label for="">网络计费方式：</label>
+                  </el-col>
+                  <el-col :span="12" class="content">
+                    <span>{{scope.row.internet_charge_type}}</span>
+                  </el-col>
+                </el-row>
+                <el-row :gutter="0">
+                  <el-col :span="12" class="label">
+                    <label for="">实例计费方式：</label>
+                  </el-col>
+                  <el-col :span="12" class="content">
+                    <span>{{scope.row.instance_charge_type}}</span>
+                  </el-col>
+                </el-row>
+                <el-row :gutter="0">
+                  <el-col :span="12" class="label">
+                    <label for="">所在地区：</label>
+                  </el-col>
+                  <el-col :span="12" class="content">
+                    <span>{{scope.row.region_name}}</span>
+                  </el-col>
+                </el-row>
+                <el-row :gutter="0">
+                  <el-col :span="12" class="label">
+                    <label for="">公网IP：</label>
+                  </el-col>
+                  <el-col :span="12" class="content">
+                    <span>{{scope.row.instance_pub_ip}}</span>
+                  </el-col>
+                </el-row>
+                <el-row :gutter="0">
+                  <el-col :span="12" class="label">
+                    <label for="">私网IP：</label>
+                  </el-col>
+                  <el-col :span="12" class="content">
+                    <span>{{scope.row.instance_pri_ip}}</span>
+                  </el-col>
+                </el-row>
+                <el-row :gutter="0">
+                  <el-col :span="12" class="label">
+                    <label for="">创建时间：</label>
+                  </el-col>
+                  <el-col :span="12" class="content">
+                    <span>{{scope.row.create_time}}</span>
+                  </el-col>
+                </el-row>
+                <el-row :gutter="0">
+                  <el-col :span="12" class="label">
+                    <label for="">过期时间：</label>
+                  </el-col>
+                  <el-col :span="12" class="content">
+                    <span>{{scope.row.end_time}}</span>
+                  </el-col>
+                </el-row>
+              </div>
+              <!--<el-table :data="scope">-->
+              <!--<el-table-column width="150" property="instance_name" label="名称"></el-table-column>-->
+              <!--</el-table>-->
+              <a href="javascript:void (0)" slot="reference">
+                {{scope.row.instance_name}}
+              </a>
+            </el-popover>
+          </div>
         </el-table-column>
-        <el-table-column
-          prop="os_name"
-          label="系统版本">
-        </el-table-column>
+        <!--<el-table-column-->
+        <!--prop="os_name"-->
+        <!--label="系统版本">-->
+        <!--</el-table-column>-->
         <el-table-column
           prop="instance_type"
           label="系统类型">
@@ -79,9 +158,15 @@
           label="操作"
           width="200">
           <template slot-scope="scope">
-            <el-button @click="stopInstance(scope.row.instance_id, scope.row.account_id)" type="warning" size="mini" v-if="scope.row.instance_status_id == 0">关机</el-button>
-            <el-button @click="startInstance(scope.row.instance_id, scope.row.account_id)" type="primary" size="mini" v-else>开机</el-button>
-            <el-button @click="cancelInstance(scope.row.instance_id, scope.row.account_id)" type="danger" size="mini">取消管理</el-button>
+            <el-button @click="stopInstance(scope.row.instance_id, scope.row.account_id)" type="warning" size="mini"
+                       v-if="scope.row.instance_status_id == 0">关机
+            </el-button>
+            <el-button @click="startInstance(scope.row.instance_id, scope.row.account_id)" type="primary" size="mini"
+                       v-else>开机
+            </el-button>
+            <el-button @click="cancelInstance(scope.row.instance_id, scope.row.account_id)" type="danger" size="mini">
+              取消管理
+            </el-button>
             <!--<el-button @click="deleteUser(scope.row.id)" v-if="scope.row.active != '0'" type="danger" icon="el-icon-delete" circle size="small"></el-button>-->
             <!--<el-button @click="deleteUser(scope.row.id)" v-else icon="el-icon-check" circle size="small"></el-button>
              v-if="scope.row.status === 0"
@@ -107,7 +192,7 @@
         params: {
           name: '',
         },
-        cur_firm:{
+        cur_firm: {
           firm_key: '',
           firm_name: ''
         },
@@ -135,7 +220,7 @@
           success: function (data) {
             if (data.code == 0) {
               app.firms = data.data.obj;
-              if (app.firms.length > 0){
+              if (app.firms.length > 0) {
                 app.cur_firm.firm_key = app.firms[0].firm_key;
                 app.cur_firm.firm_name = app.firms[0].firm_name;
                 app.getHosts();
@@ -158,7 +243,12 @@
           url: this.$base_url + '/public_cloud/get_hosts/',
           type: 'post',
           dataType: 'json',
-          data: {user_token: app.user.user_token, family_id: app.cur_family.id,firm_key: app.cur_firm.firm_key, keyword: app.searchKeyword},
+          data: {
+            user_token: app.user.user_token,
+            family_id: app.cur_family.id,
+            firm_key: app.cur_firm.firm_key,
+            keyword: app.searchKeyword
+          },
           success: function (data) {
             if (data.code == 0) {
               app.hostsData = data.data.obj;
@@ -183,7 +273,12 @@
             url: this.$base_url + '/public_cloud/stop_instance/',
             type: 'post',
             dataType: 'json',
-            data: {user_token: app.user.user_token,firm_key: app.cur_firm.firm_key,instance_id:instance_id, account_id: account_id},
+            data: {
+              user_token: app.user.user_token,
+              firm_key: app.cur_firm.firm_key,
+              instance_id: instance_id,
+              account_id: account_id
+            },
             success: function (data) {
               loading.close();
               if (data.code == 0) {
@@ -193,7 +288,7 @@
                   center: true
                 });
                 app.getHosts();
-              }else {
+              } else {
                 app.$message({
                   type: 'error',
                   message: data.msg,
@@ -226,7 +321,12 @@
             url: this.$base_url + '/public_cloud/start_instance/',
             type: 'post',
             dataType: 'json',
-            data: {user_token: app.user.user_token,firm_key: app.cur_firm.firm_key,instance_id:instance_id, account_id: account_id},
+            data: {
+              user_token: app.user.user_token,
+              firm_key: app.cur_firm.firm_key,
+              instance_id: instance_id,
+              account_id: account_id
+            },
             success: function (data) {
               loading.close();
               if (data.code == 0) {
@@ -236,7 +336,7 @@
                   center: true
                 });
                 app.getHosts();
-              }else {
+              } else {
                 app.$message({
                   type: 'error',
                   message: data.msg,
@@ -269,7 +369,7 @@
             url: this.$base_url + '/public_cloud/cancel_host/',
             type: 'post',
             dataType: 'json',
-            data: {user_token: app.user.user_token,instance_id:instance_id},
+            data: {user_token: app.user.user_token, instance_id: instance_id},
             success: function (data) {
               loading.close();
               if (data.code == 0) {
@@ -279,7 +379,7 @@
                   center: true
                 });
                 app.getHosts();
-              }else {
+              } else {
                 app.$message({
                   type: 'error',
                   message: data.msg,
@@ -308,9 +408,27 @@
     /*padding: 0 0 0 0!important;*/
     line-height: 35px;
   }
+
+  .detail {
+    padding-top: 6%;
+    width: 100%;
+    height: 200px;
+  }
+
+  .label {
+    text-align: right;
+    color: #6f7180;
+  }
+
+  .content {
+    text-align: left;
+    color: #999999;
+  }
+
   .linux {
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA4RpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNi1jMDY3IDc5LjE1Nzc0NywgMjAxNS8wMy8zMC0yMzo0MDo0MiAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDowNzllMWZkYS1kNGNmLWZlNDEtYjE1YS1kYzYxYzA1YTI2YWMiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6RTFEQTFBNUQyMjUwMTFFNkI2QUZFMjNGQkY1QjAwRTAiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6RTFEQTFBNUMyMjUwMTFFNkI2QUZFMjNGQkY1QjAwRTAiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIDIwMTUgKFdpbmRvd3MpIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6MTYyZWM5NDQtZjYzMS1kYjQ3LWFmZDUtMDkxMDJjZTk0NjhkIiBzdFJlZjpkb2N1bWVudElEPSJhZG9iZTpkb2NpZDpwaG90b3Nob3A6ZjcwOTY0OTAtMTdlMC0xMWU2LWJiODctZGU2ODhjMGY2YzZiIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+42UDzQAAA/BJREFUeNrMV29MW1UU/722dK2xwGi3wMIgBowSFKPCIKSDolY2DUtqcF9GplMzHIyFuH3CfTBZwNEEFTWGdcPVMT4IoqxMKl1MQIQMu9jh2MaiWyhZO1YphG7lzyOvz/NK1yzMzbq8+LzJL+/ce85rf++cc8+5l+F5HlIORUNDg2QM6urqGEVEZiT4//CHyyDxUMToqnveq62t/aS1tbV8aWlJaTKZTjY1Ne3TaDRYXFyMGpFeHAKrR3d39/bm5ubqO/OOjo6axMTEEYPB0O73+8X3QGdnZ1RWq1XoOfVtcmGJCaPn3Xi9/FX86uyBxWIpnpqaag8EAlFbo9EoDoGxsbGorNXpMD3H+Z5J9uLQkXW4zS/gzGk/ikq2sF1dXfD5fFFbq9UqDgGWXY4m7lxgCUrV2nFj2gheMNDS/CAOKkO4ePlmdl9fHzweD9mz4obgjitlMgZKpQoTk1Np8+l7cfWXCWQU7sZnbethKCowDAwMFFRUVJz1er2Qy+VwOp3iEGhsPIxQKIT4+HjMzs6kapMSrVsrvoNQRXg1ULyZQqNNAoXglNlsTs/JyQlvBdEIOBwOKBQKCGWb4zi7zWbTJGlWdBwRC3Ec9u8/IGzX9Xq93tbb2/tyMBiMKQQxFSLaZujv70d+fn5lVlbWU2VlZSsZQYTkMhni4uJQVVVFXtBiaGjIODg4mJuSkiIeAbd7EhcuXMLw8Ghl5bs1kcRkBW9EbRISEpC7qSAsW45+uWtkxCleEnpv+PDbFRcZBx/PKygMr4VCHCWlbFVxl4eftu+H1yyyh1Gsf14cD3zU1Aj758bt7h48+nP7OxhyeaFSqcOZLoxloa3MfIzAlTMrBD5NU504/pZ4HsDFVxyK63bjhhzgNfYcsvOexBdf2fD2DkNYHUe99MZ5G47VLMBPUSkqcW1DkjeTVH+IQmDBYzeqtSR4gMw84Mi+W9iwMS2qP9rmQMg1isr3BWPC5WUNN/NBP1CdKkoIJv2ZY9fHgeAMTSaAN8uBs117sWdPNV4ylmL3zlIwt2epKpKNC5hTbOphUz/cIdoueCTbXDQRfLHsWmDzQffs06Pjl+KveW9O72ppseh1unXPWdu+zk1+LOP0T8cVv1+dN73Hppu3yXWlA7H8NlNfX89LdSISjmSSn4j+N0cyXkoCMcX/hG7LPWs7p3/gaZ1ZtfavCDB3X0zojhArgQTCScKzhHOENwhz/0Tgbw63D5UDawiHCC2E1Mizg5DxXyXhj4Q/CfbIXPjkY4RvxCTAr4YQ74juCaE/CQ3xLnuh6Gy837sPSvL79QLmATlQT3AJ/Y9wi7A2khMHHuaax0h9O5a8EP0lwAAszYGGXkCgUwAAAABJRU5ErkJggg==);
   }
+
   .windows {
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA4RpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNi1jMDY3IDc5LjE1Nzc0NywgMjAxNS8wMy8zMC0yMzo0MDo0MiAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDowNzllMWZkYS1kNGNmLWZlNDEtYjE1YS1kYzYxYzA1YTI2YWMiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6NUFDQjZGNEYyMjUwMTFFNkE1QTE4QTU2N0EwNTg0OEQiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NUFDQjZGNEUyMjUwMTFFNkE1QTE4QTU2N0EwNTg0OEQiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIDIwMTUgKFdpbmRvd3MpIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6MTYyZWM5NDQtZjYzMS1kYjQ3LWFmZDUtMDkxMDJjZTk0NjhkIiBzdFJlZjpkb2N1bWVudElEPSJhZG9iZTpkb2NpZDpwaG90b3Nob3A6ZjcwOTY0OTAtMTdlMC0xMWU2LWJiODctZGU2ODhjMGY2YzZiIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+qAzvpAAAAVBJREFUeNpi/P//P8NAApa2trYBc0FVVRUjC5TNOAD2gz3OxDDAgAWXxCIRD6pZEvdmB+kOIAHwAbEKEKtCMYitDqVFyQ4BNMCFZoEaELcA8XEgFqNJFCCBJ0AsjUW8n1LLiU2E0rRMhAOeC0YdQEwiVMaTOJXp4YC7OMT1gPgSAb2Mo2lgWDjg1UDnAnFohYNe2fwA4rdALExrB4DAJyA+C8XIQASIhZBqQzW0mpFqDsAH3gHxKSgeRiUhvlYMLRzwfyBDgKgWMbY2IjCU/gPFGSkJOUbkjgmwj0CsA/iBeAkQGwLxGSCOB+KPhBwA7AdQJRGyA3EzEM8AYhkovYrcmpEcB+wF4tdAvB3KB3l5DhCvoaYD/qNjUHxD5UClYB8Q/0NSfxCIZXHpxZfIWYitx5HSQCsQn4cWQJ+BWBCaJkrI6eYxDnTveMBLQoAAAwCOJVIaOweJ6QAAAABJRU5ErkJggg==);
   }

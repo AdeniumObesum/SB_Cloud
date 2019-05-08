@@ -64,8 +64,13 @@ class HostInfoSerializer(serializers.ModelSerializer):
     instance_type = serializers.SerializerMethodField()
     instance_status = serializers.SerializerMethodField()
     end_time = serializers.SerializerMethodField()
+    create_time = serializers.SerializerMethodField()
+    internet_charge_type = serializers.SerializerMethodField()
+    instance_charge_type = serializers.SerializerMethodField()
+    region_name = serializers.SerializerMethodField(method_name=None)
     instance_type_id = serializers.SerializerMethodField(method_name=None)
     instance_status_id = serializers.SerializerMethodField(method_name=None)
+
     class Meta:
         model = models.HostInfo
         fields = "__all__"
@@ -79,8 +84,21 @@ class HostInfoSerializer(serializers.ModelSerializer):
     def get_end_time(self, obj):
         return obj.end_time.strftime('%Y-%m-%d')
 
+    def get_create_time(self, obj):
+        return obj.start_time.strftime('%Y-%m-%d')
+
     def get_instance_type_id(self, obj):
         return obj.instance_type
 
     def get_instance_status_id(self, obj):
         return obj.instance_status
+
+    def get_internet_charge_type(self, obj):
+        return obj.get_internet_charge_type_display()
+
+    def get_instance_charge_type(self, obj):
+        return obj.get_instance_charge_type_display()
+
+    def get_region_name(self, obj):
+        region = models.RegionInfo.objects.get(id=obj.region_id)
+        return region.region_name
