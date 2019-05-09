@@ -189,7 +189,7 @@ class QcloudOperator(object):
         :return:
         """
         ecs_list = self.api_get_ecs()
-        print(ecs_list)
+        # print(ecs_list)
         db_all_info = models.HostInfo.objects.filter(account_id=self.account.id, is_import=1)
         not_imports = models.HostInfo.objects.filter(account_id=self.account.id, is_import=0)
         not_imports_list = [i.instance_id for i in not_imports]
@@ -203,6 +203,7 @@ class QcloudOperator(object):
             if info.instance_id not in api_ecs_list:
                 info.is_delete = 1
                 info.save()
+
         for ecs in api_ecs_list_to_model:
             if 'CentOS' in ecs['OsName']:
                 instance_type = 0

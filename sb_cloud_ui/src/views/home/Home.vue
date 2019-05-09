@@ -2,25 +2,25 @@
   <div>
     <el-card style="border-radius: 0">
       <div slot="header">
-        <span>介绍</span>
+        <span style="color: #666666">欢迎使用云平台管理系统</span>
       </div>
       <div style="width: 100%;height: 80px">
-        <span>跨云-多账号-统一化管理</span>
+        <span style="color:#6f7180;font-size: small">跨云-多账号-统一化管理</span>
       </div>
       <div class="demo">
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <div class="grid-content">
-              <div id="accounts" style="padding: 10px;background: #C1C4FC;width: 100%;height: 320px"></div>
-            </div>
-          </el-col>
-          <el-col :span="12">
-            <div class="grid-content ">
-              <div id="hosts" style="padding: 10px;background: #C1C4FC;width: 100%;height: 320px">
-              </div>
-            </div>
-          </el-col>
-        </el-row>
+        <!--<el-row :gutter="20">-->
+          <!--<el-col :span="12">-->
+            <!--<div class="grid-content">-->
+              <!--<div id="accounts" style="padding: 10px;background: #C1C4FC;width: 100%;height: 320px"></div>-->
+            <!--</div>-->
+          <!--</el-col>-->
+          <!--<el-col :span="12">-->
+            <!--<div class="grid-content ">-->
+              <!--<div id="hosts" style="padding: 10px;background: #C1C4FC;width: 100%;height: 320px">-->
+              <!--</div>-->
+            <!--</div>-->
+          <!--</el-col>-->
+        <!--</el-row>-->
       </div>
     </el-card>
     <br>
@@ -39,8 +39,8 @@
           name: 'ChooseFamily'
         })
       }
-      app.drawPieAccount();
-      app.drawPieHost();
+      // app.drawPieAccount();
+      // app.drawPieHost();
 
       // window.location.reload();
     },
@@ -145,4 +145,7 @@
 /*a {*/
   /*color: ;*/
 /*}*/
+  .demo {
+    height: 320px;
+  }
 </style>

@@ -18,7 +18,7 @@ class CreateFamily(APIView):
         return super(CreateFamily, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData(code=0, msg='success', data= {}).response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
         user_id = request.data.get('user_id', '')
         family_name = request.data.get('family_name', '')
         if user_id and family_name:
@@ -42,7 +42,7 @@ class GetFamily(APIView):
         return super(GetFamily, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData(code=0, msg='success', data= {}).response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
         user_id = request.data.get('user_id', '')
         if user_id:
             families = models.Family.objects.filter(user_id=user_id, is_delete=0)
@@ -75,15 +75,16 @@ class AddAccount(APIView):
         app_id = request.data.get('app_id', '')
         family_id = request.data.get('family_id', '')
         firm_key = request.data.get('firm_key', '')
-        if (access_key and secret_key and firm_key and family_id):
+        if access_key and secret_key and firm_key and family_id:
             models.AccountInfo.objects.update_or_create(access_key=access_key,
-                                                        is_delete=0,
+                                                        # is_delete=0,
                                                         defaults={
                                                             'access_key': access_key,
                                                             'firm_key': firm_key,
                                                             'secret_key': secret_key,
                                                             'app_id': app_id,
-                                                            'family_id': family_id
+                                                            'family_id': family_id,
+                                                            'is_delete': 0
                                                         })
         else:
             response['code'] = 1
@@ -102,7 +103,7 @@ class GetAccount(APIView):
         return super(GetAccount, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData(code=0, msg='success', data= {}).response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
         user_id = request.data.get('user_id', '')
 
         #
@@ -136,7 +137,7 @@ class GetAccountDetail(APIView):
         return super(GetAccountDetail, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData(code=0, msg='success', data= {}).response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
         # user_id = request.data.get('user_id', '')
         # ali = aliyun.AliyunOperator(access_key='LTAIkLqvvsa0zXcZ', secret_key='TQ7LLCxyPwVEwSSvSKzO5PdN4j2lfZ')
         # ali.api_get_region_info_to_model()
@@ -174,9 +175,40 @@ class GetFirm(APIView):
         return super(GetFirm, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        response = ResponseData.ResponseData(code=0, msg='success', data= {}).response_data()
+        response = ResponseData.ResponseData(code=0, msg='success', data={}).response_data()
         firms = models.FirmInfo.objects.filter()
         serializer = serializers.FirmSerializer(firms, many=True)
         response['data']['obj'] = serializer.data
         return Response(response, status=status.HTTP_200_OK)
 
+
+class DeleteAccount(APIView):
+    """
+    删除账户,将会删除该账户相关所有信息
+    """
+    authentication_classes = [auth.MyAuthentication]
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(DeleteAccount, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        response = {
+            'code': 0,
+            'msg': 'success',
+            'data': {}
+        }
+
+        account_id = request.data.get('account_id', '')
+
+        if id:
+            models.AccountInfo.objects.filter(id=account_id).update(is_delete=1)
+            models.HostInfo.objects.filter(account_id=account_id).update(is_delete=1)
+            models.DiskInfo.objects.filter(account_id=account_id).update(is_delete=1)
+            models.SnapshotInfo.objects.filter(account_id=account_id).update(is_delete=1)
+            response['code'] = 0
+            response['msg'] = '账户已删除，与其关联其它内容已清空！'
+        else:
+            response['code'] = 1
+            response['msg'] = '参数错误'
+
+        return Response(response, status=status.HTTP_200_OK)

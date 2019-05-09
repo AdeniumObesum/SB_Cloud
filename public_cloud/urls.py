@@ -19,6 +19,7 @@ urlpatterns = [
     path('get_families/', account_views.GetFamily.as_view()),
     path('get_accounts/', account_views.GetAccount.as_view()),
     path('add_account/', account_views.AddAccount.as_view()),
+    path('delete_account/', account_views.DeleteAccount.as_view()),
     path('get_firms/', account_views.GetFirm.as_view()),
     path('get_account_detail/', account_views.GetAccountDetail.as_view()),
     path('import_host/', resource_views.ImportHost.as_view()),

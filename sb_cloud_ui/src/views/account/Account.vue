@@ -74,7 +74,7 @@
             width="100">
             <template slot-scope="scope">
               <el-button @click="importHost(scope.row)" type="text" size="small">导入</el-button>
-              <el-button type="text" size="small">删除</el-button>
+              <el-button @click="deleteAccount(scope.row)" type="text" size="small">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -238,6 +238,50 @@
               })
             }
           }
+        })
+      },
+      deleteAccount: function (data) {
+        let app = this;
+        console.log(data.account_id);
+        app.$confirm('确定删除账号' + data.access_key + '？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(()=> {
+          const loading = this.$loading({
+            lock: true,
+            text: '执行中，请稍后',
+            spinner: 'el-icon-loading',
+            background: 'rgba(0, 0, 0, 0.7)'
+          });
+          $.ajax({
+            url: this.$base_url + '/public_cloud/delete_account/',
+            type: 'post',
+            dataType: 'json',
+            data: {user_token: app.user.user_token, account_id: data.account_id},
+            success: function (data1) {
+              loading.close();
+              if (data1.code == 0) {
+                app.$message({
+                  type: 'success',
+                  message: data1.msg,
+                  center: true
+                });
+                app.getAccounts();
+              }else {
+                app.$message({
+                  type: 'error',
+                  message: data1.msg,
+                  center: true
+                })
+              }
+            }
+          });
+        }).catch(()=> {
+          app.$message({
+            type: 'info',
+            message: '已取消'
+          });
         })
       }
     }
