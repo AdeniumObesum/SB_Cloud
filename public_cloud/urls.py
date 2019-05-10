@@ -14,7 +14,6 @@ from public_cloud.account import views as account_views
 from public_cloud.resouce import views as resource_views
 
 urlpatterns = [
-    # path('public_cloud/', include('public_cloud.urls')),
     path('create_family/', account_views.CreateFamily.as_view()),
     path('get_families/', account_views.GetFamily.as_view()),
     path('get_accounts/', account_views.GetAccount.as_view()),

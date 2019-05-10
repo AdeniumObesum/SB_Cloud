@@ -30,6 +30,7 @@ ALLOWED_HOSTS = ['127.0.0.1', ]
 # Application definition
 
 INSTALLED_APPS = [
+    # 'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -156,7 +157,7 @@ REST_FRAMEWORK = {
     ),
 }
 
-#跨域增加忽略
+# 跨域增加忽略
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ORIGIN_WHITELIST = ()
@@ -183,3 +184,28 @@ CORS_ALLOW_HEADERS = (
     'x-requested-with',
 )
 
+# # websocket
+# import dwebsocket
+#
+# # 为所有的URL提供websocket，如果只是单独的视图需要可以不选
+# MIDDLEWARE_CLASSES = ['dwebsocket.middleware.WebSocketMiddleware']
+#
+# WEBSOCKET_ACCEPT_ALL = True  # 可以允许每一个单独的视图实用websockets
+
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "asgi_redis.RedisChannelLayer",
+#         # "BACKEND": "asgiref.inmemory.ChannelLayer",
+#         "CONFIG": {
+#             "hosts": [os.environ.get('REDIS_URL', 'redis://localhost:6379')],
+#         },
+#         "ROUTING": "public_cloud.terminal.tools.channel.routing.websocket_urlpatterns",
+#     },
+# }
+
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "asgiref.inmemory.ChannelLayer",
+#         "ROUTING": "public_cloud.terminal.tools.channel.routing.websocket_urlpatterns",
+#     },
+# }

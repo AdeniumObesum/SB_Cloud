@@ -139,6 +139,10 @@
         <el-table-column
           prop="instance_pub_ip"
           label="公网IP">
+          <template slot-scope="scope">
+            <a :href="'http://localhost:8001?host=' + scope.row.instance_pub_ip" title="连接" target="_blank" v-if="scope.row.instance_type_id==0">{{scope.row.instance_pub_ip}}</a>
+            <span v-else>{{scope.row.instance_pub_ip}}</span>
+          </template>
           <!--<div slot-scope="scope" style="width: 100%;text-align: center">  传值方式-->
           <!--</div>-->
         </el-table-column>
